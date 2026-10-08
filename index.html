@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="0.3.1">
+<meta name="app-version" content="0.3.2">
 <title>$100K Funnel Revenue Calculator | Priddy Impact Group</title>
 <meta name="description" content="Model how a main product, order bump, upsell, downsell and one-time offer work together to raise your average order value and monthly profit.">
 <link rel="icon" href="assets/pig-monogram-gold.png">
@@ -673,8 +673,8 @@
 import {
   calculate, compareScenarios, defaultScenarios, DEFAULT_INPUTS, DEFINITIONS, OFFER_KEYS, OFFER_LABELS,
   formatMoney, formatCount,
-} from './src/calc.js?v=0.3.1';
-import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.3.1';
+} from './src/calc.js?v=0.3.2';
+import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.3.2';
 
 const $ = (id) => document.getElementById(id);
 const CURRENT_KEY = 'pig-dp002-current';
@@ -1109,7 +1109,8 @@ document.addEventListener('input', (e) => {
     if (t.type === 'range') { other.value = t.value; paintSlider(t); }
     else if (t.value.trim() !== '' && Number.isFinite(Number(t.value))) { other.value = t.value; paintSlider(other); }
   }
-  if (t.dataset.field) render();
+  // Sliders have no data-field of their own; they drive a paired box, so they must re-render too.
+  if (t.dataset.field || t.dataset.pair) render();
 });
 document.addEventListener('change', (e) => { if (e.target.type === 'checkbox' && e.target.dataset.field) render(); });
 $('resetScen').addEventListener('click', () => {

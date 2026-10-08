@@ -1,6 +1,6 @@
 # DP-002 — $100K Funnel Revenue Calculator
 
-**Version 0.3.1** (calculation engine 2.0.0, data schema 2). See `CHANGELOG.md`.
+**Version 0.3.2** (calculation engine 2.0.0, data schema 2). See `CHANGELOG.md`.
 
 Models how a main product, order bump, upsell, downsell and one-time offer work together to raise average order value (AOV), revenue and profit. Dependency-free; runs in the browser and on the server.
 

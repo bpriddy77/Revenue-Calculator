@@ -6,6 +6,10 @@ All builds follow [semantic versioning](https://semver.org). The version lives i
 - **ENGINE_VERSION**: the calculation rules. Bump whenever a formula changes.
 - **DATA_SCHEMA**: the shape of saved data. Bump when the saved format changes.
 
+## [0.3.2] - 2026-10-08
+### Fixed
+- Moving any slider now updates the results immediately. Added `test/ui-smoke.py`, a browser test that checks every slider, toggle and typed field updates results live. Sliders updated their number box but did not trigger a recalculation, so results only caught up on the next typed change (such as editing the product name).
+
 ## [0.3.1] - 2026-10-08
 ### Changed
 - A product name is now required before anything is calculated. Until one is entered:
