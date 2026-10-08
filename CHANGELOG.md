@@ -6,6 +6,10 @@ All builds follow [semantic versioning](https://semver.org). The version lives i
 - **ENGINE_VERSION**: the calculation rules. Bump whenever a formula changes.
 - **DATA_SCHEMA**: the shape of saved data. Bump when the saved format changes.
 
+## [0.3.4] - 2026-10-08
+### Changed
+- "Authority" in the page header is now brand gold (`#BEAE88`).
+
 ## [0.3.3] - 2026-10-08
 ### Changed
 - Renamed to **Authority Funnel Revenue Calculator** (page title, header, report, footer, README, engine header).

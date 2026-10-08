@@ -1,6 +1,6 @@
 # DP-002 — Authority Funnel Revenue Calculator
 
-**Version 0.3.3** (calculation engine 2.0.0, data schema 2). See `CHANGELOG.md`.
+**Version 0.3.4** (calculation engine 2.0.0, data schema 2). See `CHANGELOG.md`.
 
 Helps coaches, consultants and service providers plan an authority funnel: five evergreen digital products (main product, order bump, upsell, downsell, one-time offer) that showcase their expertise and lead buyers toward bigger one-on-one work. Models how the five work together on average order value (AOV), revenue and profit. Dependency-free; runs in the browser and on the server.
 
