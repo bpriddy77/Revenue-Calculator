@@ -1,49 +1,73 @@
-# Digital Product Revenue Calculator
+# DP-002 — $100K Funnel Revenue Calculator
 
-**Version 0.2.0** (calculation engine 1.1.0). See `CHANGELOG.md`.
+**Version 0.3.0** (calculation engine 2.0.0, data schema 2). See `CHANGELOG.md`.
 
-The tested math and branded calculator page for Project 2. It has no dependencies, runs in the browser and on the server, and drops straight into a React/Vite app.
+Models how a main product, order bump, upsell, downsell and one-time offer work together to raise average order value (AOV), revenue and profit. Dependency-free; runs in the browser and on the server.
 
 ```bash
-npm test        # 19 tests, Node 18+
+npm test        # 32 tests, Node 18+
 ```
 
 ```js
-import { calculate, compareScenarios, DEFINITIONS, formatMoney } from './src/calc.js';
+import { calculate, compareScenarios, defaultScenarios } from './src/calc.js';
 
-const r = calculate({ price: 17, visitors: 1000, conversionRate: 0.02 /* … */ });
-if (!r.ok) showErrors(r.errors);              // { price: 'Product price is required.' }
-r.results.operatingProfit;                     // 63.94
-r.goals.revenue.requiredOrders;                // 122
-r.goals.revenue.additionalVisitors;            // 5100  → "You're 5,100 visitors away"
-r.notes.revenuePerVisitor;                     // plain-language reason when a value is null
+const r = calculate({
+  price: 27, visitors: 5000, conversionRate: 0.02,
+  offers: {
+    bump:     { enabled: true, price: 17,  rate: 0.35 },
+    upsell:   { enabled: true, price: 97,  rate: 0.25 },
+    downsell: { enabled: true, price: 47,  rate: 0.20 },   // only upsell decliners
+    oto:      { enabled: true, price: 297, rate: 0.10 },
+  },
+});
+r.results.aov;            // 93.95
+r.results.grossRevenue;   // 9395
+r.offers;                 // itemized: eligible, buyers, revenue per offer
+r.goals.revenue;          // requiredBuyers, requiredVisitors, requiredBuyersAtTargetAov…
+r.notes;                  // plain-language reasons whenever a value is null
 ```
 
-Rates are decimals (2% = `0.02`). The UI converts to and from percentages. Money values come back at full precision, so round them only for display.
+Rates are decimals (35% = `0.35`). Errors use dotted keys, e.g. `errors['offers.upsell.rate']`.
 
-## Decision log (locked 2026-10-08)
+## Funnel model
+
+| Offer | Who sees it | Charge |
+|---|---|---|
+| Main product | Visitors; buyers = visitors × conversion | New charge |
+| Order bump | Every initial buyer, at checkout | Same charge as main |
+| Upsell | Every initial buyer | New charge |
+| Downsell | Only buyers who decline the upsell; requires an upsell | New charge |
+| One-time offer | Initial buyers × reach rate (100% in MVP) | New charge |
+
+AOV = gross funnel revenue ÷ initial buyers, from the modeled acceptance rates. The most one buyer could spend (main + bump + the larger of upsell or downsell + OTO) is shown separately.
+
+## Decision log
+
+Locked with Malissa, 2026-10-08:
 
 | # | Decision | How the engine handles it |
 |---|----------|---------------------------|
-| 1 | Refunds and processing fees | Fees are charged on every order and are **not** returned on refunds. Refunds are treated as occasional, case-by-case events. |
-| 2 | Ad spend in goal calculations | Treated as a **fixed monthly budget**. The profit-goal result includes a note that scaling usually takes a bigger ad budget and that cost per visitor tends to rise. |
-| 3 | Profit goal | Required orders = (profit goal + ad spend + fixed costs) ÷ contribution per order. If each sale loses money, the goal is marked unreachable and the reason is explained. |
-| 4 | Rounding | Required orders round **up** to whole sales. Required visitors are calculated from the rounded orders, then also rounded up. Projected orders stay as decimals (expected values). |
-| 5 | Acquisition cost | Labeled **blended**: ad spend ÷ all orders. The definition explains that true paid cost is higher if some buyers came in organically. |
-| 6 | Per-sale costs | Apply to **every** order, including refunded ones, since digital products are delivered before a refund. |
+| 1 | Refunds and fees | Fees are charged on every sale and are **not** returned on refunds. Refunds are occasional, case-by-case events. |
+| 2 | Ad spend in goals | Treated as a **fixed monthly budget**. The profit goal notes that scaling usually takes more ad spend and cost per visitor rises. |
+| 3 | Profit goal | Required buyers = (profit goal + ad spend + operating costs) ÷ contribution per buyer. Unreachable when each buyer loses money, with the reason explained. |
+| 4 | Rounding | Required buyers round **up**; required visitors come from the rounded buyers, also rounded up. Projections stay as decimals. |
+| 5 | Acquisition cost | Labeled **cost per buyer** (blended): ad spend ÷ all initial buyers. |
+| 6 | Per-sale costs | Fulfillment applies to **every** sale of an offer, including refunded ones. |
 
-## Edge cases
+Added for the funnel model in v0.3.0 (assumptions, open to change):
 
-The engine never returns `Infinity` or `NaN`. When a value can't be determined, it returns `null` and puts a plain-language explanation in `notes`:
-
-- 0 visitors → no revenue per visitor and no acquisition cost. Goal results still show the traffic needed.
-- 0% conversion → required orders are shown; required visitors are explained instead of calculated.
-- 100% refunds, or a price below per-sale costs → the goal is marked `reachable: false` with the reason.
-- An operating loss → `isLosingMoney: true`, so the UI can flag it.
+| # | Assumption | Why |
+|---|-----------|-----|
+| 7 | The fixed processing fee is charged **once per charge**: main + bump share one; upsell, downsell and OTO are one each. | The brief says the bump is added to the original transaction; post-purchase offers are separate one-click charges in GHL. |
+| 8 | **One refund rate** applies to all funnel revenue. | Keeps the MVP simple; per-offer refund rates can come later. |
+| 9 | **ROAS** = funnel revenue before refunds ÷ ad spend. | The common industry definition. |
+| 10 | The **revenue goal is measured after refunds**. | Consistent with decision 1 and the original calculator. |
+| 11 | **AOV is always shown**, even with zero buyers, because it comes from acceptance rates. | Lets customers design order value before they have traffic. |
+| 12 | Default scenarios are **½×, 1× and 1½×** the customer's conversion and acceptance rates, capped at 100%. | Each scenario is fully editable. |
 
 ## UI guidance
 
-**Make it fluid and motivating.** Recalculate on every keystroke or slider move. Show both goal panels live next to the projections, so every change instantly shows its effect on income *and* on what it takes to get there. `additionalVisitors` supports a "You're X visitors away from your goal" line. Sliders for price and conversion make the math feel playful.
+**Make it fluid and motivating.** Recalculate on every keystroke, slider move or toggle. `additionalVisitors` drives the "You're X visitors away" line; `requiredConversionRate` and `requiredBuyersAtTargetAov` show the other two levers.
 
 **Keep the honesty guardrails visible.** Show `DEFINITIONS.disclaimer` near the results, not hidden in a footer. Use wording like "at these numbers" or "your plan shows", and never "you will earn." Label every default as illustrative and editable. Because this is a paid product, the in-app copy and the sales page both need to avoid sounding like income promises.
 
@@ -51,11 +75,11 @@ The engine never returns `Infinity` or `NaN`. When a value can't be determined, 
 
 ## Prototype page and deploying
 
-`index.html` is the branded calculator screen. It imports `src/calc.js` directly, so there is no build step.
+`index.html` is the branded calculator. It imports `src/calc.js` directly, so there is no build step.
 
 On Vercel: Framework Preset **Other**, Build Command **empty**, Output Directory **empty**. If these files sit inside a subfolder of the repo, set Root Directory to that folder.
 
-The prototype remembers the last numbers in the visitor's own browser. Real accounts and server-side saving come later.
+Named saves and the working state live in the visitor's own browser (`localStorage`, keyed by data schema). Account-based saving comes with GHL access control. The report uses the browser's print dialog (Save as PDF), with a dedicated print layout.
 
 ## Selling through GoHighLevel
 
@@ -87,4 +111,4 @@ Bump `APP_VERSION` on every build. Bump `ENGINE_VERSION` when any formula change
 
 ## Not yet built
 
-Paid-only access and account-based saving (RC-08), the report export (RC-09), and multi-currency formatting beyond the `currency` field.
+Paid-only access and account-based saving; passing product names and prices in from DP-001 (future, not MVP); multi-currency formatting beyond the `currency` field.
