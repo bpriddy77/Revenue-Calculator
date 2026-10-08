@@ -114,6 +114,7 @@ function solveGoal({ goal, needed, perOrder, conversionRate, visitors, unreachab
     requiredOrders: null,
     requiredVisitors: null,
     additionalVisitors: null,
+    requiredConversionRate: null,
     notes: {},
   };
 
@@ -121,6 +122,7 @@ function solveGoal({ goal, needed, perOrder, conversionRate, visitors, unreachab
     result.requiredOrders = 0;
     result.requiredVisitors = 0;
     result.additionalVisitors = 0;
+    result.requiredConversionRate = 0;
     return result;
   }
 
@@ -140,6 +142,19 @@ function solveGoal({ goal, needed, perOrder, conversionRate, visitors, unreachab
     result.notes.requiredVisitors =
       'With a 0% conversion rate, no number of visitors produces a sale, so the visitors you need ' +
       "can't be calculated. Enter the conversion rate you're aiming for to see the traffic required.";
+  }
+
+  // The other lever: what conversion rate reaches the goal with today's traffic?
+  if (visitors > 0) {
+    const rate = result.requiredOrders / visitors;
+    if (rate <= 1) {
+      result.requiredConversionRate = rate;
+    } else {
+      result.notes.requiredConversionRate =
+        "Even if every visitor bought, today's traffic isn't enough for this goal. More visitors is the lever here.";
+    }
+  } else {
+    result.notes.requiredConversionRate = 'Add monthly visitors to see the conversion rate this goal needs.';
   }
 
   return result;

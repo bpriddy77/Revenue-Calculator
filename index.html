@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revenue Calculator</title>
+<meta name="description" content="Plan the revenue and profit of your digital product. Change any number and see your month take shape.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F3F6FA;
+    --sheet: #FFFFFF;
+    --ink: #14213D;
+    --ink-soft: #4A5875;
+    --grid: #D6E0EC;
+    --gain: #0F7B5F;
+    --loss: #B3261E;
+    --marker: #FFD84D;
+    --focus: #2F5BD3;
+    --display: 'Bricolage Grotesque', system-ui, sans-serif;
+    --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: var(--ink);
+    font: 16px/1.5 var(--body);
+  }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .page { max-width: 1180px; margin: 0 auto; padding: 32px 16px 120px; }
+
+  header.intro { max-width: 46rem; margin-bottom: 28px; }
+  h1 {
+    font: 800 clamp(2.2rem, 6vw, 3.6rem)/1.02 var(--display);
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+  .intro p { margin: 0; font-size: 1.125rem; color: var(--ink-soft); max-width: 38rem; }
+
+  .layout { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 960px) {
+    .layout { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; }
+    .results { position: sticky; top: 16px; }
+  }
+
+  .sheet {
+    background: var(--sheet);
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    padding: 22px 20px;
+  }
+  .sheet + .sheet { margin-top: 20px; }
+
+  h2 { font: 700 1.35rem/1.2 var(--display); margin: 0 0 4px; }
+  .hint { margin: 0 0 16px; color: var(--ink-soft); font-size: 0.95rem; }
+
+  fieldset { border: 0; padding: 0; margin: 0 0 22px; }
+  fieldset:last-child { margin-bottom: 0; }
+  legend { font: 700 1.05rem/1.3 var(--display); padding: 0; margin-bottom: 10px; }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+  .field .sub { font-weight: 400; color: var(--ink-soft); }
+  .row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: end; }
+  .row2 > * { min-width: 0; }
+
+  .box {
+    display: flex; align-items: center;
+    border: 1.5px solid var(--ink-soft); border-radius: 4px; background: var(--sheet);
+  }
+  .box:focus-within { border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus); }
+  .box span { padding: 0 2px 0 10px; color: var(--ink-soft); }
+  .box span.after { padding: 0 10px 0 2px; }
+  .box input {
+    flex: 1; width: 100%; min-width: 0; border: 0; background: transparent; color: var(--ink);
+    font: 400 1rem/1.2 var(--body); padding: 10px; font-variant-numeric: tabular-nums;
+  }
+  .box input:focus { outline: none; }
+  .box.invalid { border-color: var(--loss); }
+  .err { color: var(--loss); font-size: 0.875rem; margin-top: 4px; }
+  .err:empty { display: none; }
+
+  input[type=range] { width: 100%; margin: 10px 0 0; accent-color: var(--ink); }
+
+  details.more { border-top: 1.5px dashed var(--grid); padding-top: 12px; }
+  details.more summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
+  details.more[open] summary { margin-bottom: 12px; }
+
+  /* Results */
+  .headline { display: grid; gap: 6px; padding-bottom: 18px; border-bottom: 1.5px solid var(--ink); margin-bottom: 18px; }
+  .headline .label { font-size: 1rem; color: var(--ink-soft); }
+  .big {
+    font: 800 clamp(2.8rem, 9vw, 4.6rem)/1 var(--display);
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    justify-self: start;
+    padding: 0 6px;
+    background: linear-gradient(transparent 52%, var(--marker) 52%, var(--marker) 92%, transparent 92%);
+  }
+  .big.loss { color: var(--loss); background: linear-gradient(transparent 52%, #FBD3CF 52%, #FBD3CF 92%, transparent 92%); }
+  .headline .because { margin: 4px 0 0; }
+
+  .ledger { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .ledger td { padding: 7px 0; border-bottom: 1px solid var(--grid); }
+  .ledger td:last-child { text-align: right; white-space: nowrap; }
+  .ledger tr.minus td:first-child::before { content: '− '; color: var(--ink-soft); }
+  .ledger tr.total td { border-top: 2px solid var(--ink); border-bottom: 0; font-weight: 700; padding-top: 10px; }
+  .ledger tr.sub td { color: var(--ink-soft); }
+  .pos { color: var(--gain); }
+  .neg { color: var(--loss); }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-top: 20px; }
+  .stat dt { font-size: 0.9rem; color: var(--ink-soft); }
+  .stat dd { margin: 2px 0 0; font: 700 1.4rem/1.2 var(--display); font-variant-numeric: tabular-nums; }
+  .stat .why { font: 400 0.85rem/1.4 var(--body); color: var(--ink-soft); margin-top: 4px; }
+
+  .goal { padding: 16px 0; border-bottom: 1px solid var(--grid); }
+  .goal:last-child { border-bottom: 0; padding-bottom: 0; }
+  .goal h3 { font: 700 1.1rem/1.3 var(--display); margin: 0 0 8px; }
+  .goal .needs { display: flex; flex-wrap: wrap; gap: 6px 22px; font-variant-numeric: tabular-nums; }
+  .goal .needs b { font: 700 1.5rem/1.2 var(--display); display: block; }
+  .track { height: 12px; border: 1.5px solid var(--ink); border-radius: 999px; margin: 14px 0 6px; overflow: hidden; background: var(--sheet); }
+  .fill { height: 100%; background: var(--ink); width: 0; transition: width 0.35s ease; }
+  .fill.done { background: var(--gain); }
+  .away { font-weight: 700; margin: 0; }
+  .lever { margin: 6px 0 0; color: var(--ink-soft); }
+  .note { margin: 8px 0 0; font-size: 0.9rem; color: var(--ink-soft); }
+
+  .scen-wrap { overflow-x: auto; }
+  table.scen { width: 100%; min-width: 480px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .scen th, .scen td { padding: 8px 6px; text-align: right; border-bottom: 1px solid var(--grid); }
+  .scen th:first-child, .scen td:first-child { text-align: left; }
+  .scen thead th { font: 700 1rem/1.2 var(--display); border-bottom: 2px solid var(--ink); }
+  .scen input {
+    width: 100%; max-width: 110px; text-align: right; font: 400 0.95rem var(--body); color: var(--ink);
+    border: 1.5px solid var(--ink-soft); border-radius: 4px; padding: 6px; background: var(--sheet);
+  }
+  .scen tr.out td { font-weight: 700; }
+  button.plain {
+    margin-top: 12px; font: 700 0.95rem var(--body); color: var(--ink); background: var(--sheet);
+    border: 1.5px solid var(--ink); border-radius: 4px; padding: 8px 14px; cursor: pointer;
+  }
+  button.plain:hover { background: var(--paper); }
+
+  .disclaimer { margin-top: 16px; font-size: 0.9rem; color: var(--ink-soft); border-left: 4px solid var(--marker); padding-left: 12px; }
+  .blocked { padding: 20px 0; font-weight: 700; color: var(--loss); }
+
+  /* Mobile: keep the profit in view while typing */
+  .dock {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+    background: var(--ink); color: #fff; padding: 12px 16px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  }
+  .dock b { font: 800 1.5rem/1 var(--display); font-variant-numeric: tabular-nums; }
+  .dock b.loss { color: #FFB4AB; }
+  @media (min-width: 960px) { .dock { display: none; } .page { padding-bottom: 48px; } }
+
+  @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="intro">
+    <h1>Revenue Calculator</h1>
+    <p>Change any number and watch your month take shape. Every figure here is a starting example, so replace it with your own.</p>
+  </header>
+
+  <div class="layout">
+    <!-- Inputs -->
+    <form class="sheet" id="inputs" novalidate>
+      <h2>Your numbers</h2>
+      <p class="hint">Everything updates as you type.</p>
+
+      <fieldset>
+        <legend>Your product</legend>
+        <div class="field">
+          <label for="productName">Product name <span class="sub">(optional)</span></label>
+          <div class="box"><input id="productName" name="productName" type="text" placeholder="e.g. Meal Prep Workbook" autocomplete="off"></div>
+        </div>
+        <div class="field">
+          <label for="price">Selling price</label>
+          <div class="box"><span>$</span><input id="price" name="price" inputmode="decimal" data-pair="price-r"></div>
+          <input type="range" id="price-r" min="1" max="500" step="1" aria-label="Selling price slider" data-pair="price">
+          <div class="err" id="err-price"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Your traffic</legend>
+        <div class="field">
+          <label for="visitors">Visitors to your sales page each month</label>
+          <div class="box"><input id="visitors" name="visitors" inputmode="numeric" data-pair="visitors-r"></div>
+          <input type="range" id="visitors-r" min="0" max="20000" step="100" aria-label="Monthly visitors slider" data-pair="visitors">
+          <div class="err" id="err-visitors"></div>
+        </div>
+        <div class="field">
+          <label for="conversionRate">Visitors who buy</label>
+          <div class="box"><input id="conversionRate" name="conversionRate" inputmode="decimal" data-pct data-pair="conversionRate-r"><span class="after">%</span></div>
+          <input type="range" id="conversionRate-r" min="0" max="10" step="0.1" aria-label="Conversion rate slider" data-pair="conversionRate">
+          <div class="err" id="err-conversionRate"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Your costs</legend>
+        <div class="row2">
+          <div class="field">
+            <label for="adSpend">Ad spend <span class="sub">/ month</span></label>
+            <div class="box"><span>$</span><input id="adSpend" name="adSpend" inputmode="decimal"></div>
+            <div class="err" id="err-adSpend"></div>
+          </div>
+          <div class="field">
+            <label for="fixedCosts">Fixed costs <span class="sub">/ month</span></label>
+            <div class="box"><span>$</span><input id="fixedCosts" name="fixedCosts" inputmode="decimal"></div>
+            <div class="err" id="err-fixedCosts"></div>
+          </div>
+        </div>
+        <details class="more">
+          <summary>Refunds, payment fees and per-sale costs</summary>
+          <div class="field">
+            <label for="refundRate">Buyers who ask for a refund</label>
+            <div class="box"><input id="refundRate" name="refundRate" inputmode="decimal" data-pct><span class="after">%</span></div>
+            <div class="err" id="err-refundRate"></div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="processingPct">Payment fee</label>
+              <div class="box"><input id="processingPct" name="processingPct" inputmode="decimal" data-pct><span class="after">%</span></div>
+              <div class="err" id="err-processingPct"></div>
+            </div>
+            <div class="field">
+              <label for="processingFixed">Plus per order</label>
+              <div class="box"><span>$</span><input id="processingFixed" name="processingFixed" inputmode="decimal"></div>
+              <div class="err" id="err-processingFixed"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="otherCostPerOrder">Other cost per sale <span class="sub">(delivery apps, licenses)</span></label>
+            <div class="box"><span>$</span><input id="otherCostPerOrder" name="otherCostPerOrder" inputmode="decimal"></div>
+            <div class="err" id="err-otherCostPerOrder"></div>
+          </div>
+        </details>
+      </fieldset>
+
+      <fieldset>
+        <legend>Your goals</legend>
+        <div class="row2">
+          <div class="field">
+            <label for="revenueGoal">Revenue goal <span class="sub">/ month</span></label>
+            <div class="box"><span>$</span><input id="revenueGoal" name="revenueGoal" inputmode="decimal"></div>
+            <div class="err" id="err-revenueGoal"></div>
+          </div>
+          <div class="field">
+            <label for="profitGoal">Profit goal <span class="sub">/ month</span></label>
+            <div class="box"><span>$</span><input id="profitGoal" name="profitGoal" inputmode="decimal"></div>
+            <div class="err" id="err-profitGoal"></div>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+
+    <!-- Results -->
+    <div class="results">
+      <section class="sheet" aria-labelledby="month-h">
+        <h2 id="month-h" class="visually-hidden" style="position:absolute;left:-9999px">Your month</h2>
+        <div id="monthBody"></div>
+        <p class="disclaimer" id="disclaimer"></p>
+      </section>
+
+      <section class="sheet" aria-labelledby="goals-h">
+        <h2 id="goals-h">What it takes to hit your goals</h2>
+        <p class="hint">Two ways to get there: more visitors, or more of them buying.</p>
+        <div id="goalsBody"></div>
+      </section>
+
+      <section class="sheet" aria-labelledby="scen-h">
+        <h2 id="scen-h">Compare three versions</h2>
+        <p class="hint">Edit the top rows. Your fees and costs from the left carry over.</p>
+        <div class="scen-wrap"><table class="scen" id="scen"></table></div>
+        <button type="button" class="plain" id="resetScen">Reset to my current numbers</button>
+      </section>
+    </div>
+  </div>
+</main>
+
+<div class="dock" aria-hidden="true"><span>Monthly profit</span><b id="dockProfit">—</b></div>
+
+<script type="module">
+import {
+  calculate, compareScenarios, DEFAULT_INPUTS, DEFINITIONS, formatMoney, formatCount,
+} from './src/calc.js';
+
+const $ = (id) => document.getElementById(id);
+const form = $('inputs');
+const STORE_KEY = 'revenue-calculator-v1';
+const NAMES = ['productName', 'price', 'visitors', 'conversionRate', 'adSpend', 'fixedCosts',
+  'refundRate', 'processingPct', 'processingFixed', 'otherCostPerOrder', 'revenueGoal', 'profitGoal'];
+const SCEN_NAMES = { conservative: 'Cautious', expected: 'Expected', optimistic: 'Optimistic' };
+
+const pctToUI = (v) => +(v * 100).toFixed(4);
+const money = (v) => formatMoney(v, 'USD');
+const whole = (v) => (v === null ? '—' : new Intl.NumberFormat('en-US').format(v));
+const pct = (v) => (v === null ? '—' : `${+(v * 100).toFixed(2)}%`);
+
+let scenarios = null;
+
+function load() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch { saved = null; }
+  const values = saved?.values || {};
+  for (const name of NAMES) {
+    const el = form.elements[name];
+    const fallback = DEFAULT_INPUTS[name];
+    let v = values[name] !== undefined ? values[name]
+      : (el.hasAttribute('data-pct') ? pctToUI(fallback) : fallback);
+    el.value = v ?? '';
+  }
+  scenarios = saved?.scenarios || null;
+  syncSliders();
+}
+
+function save() {
+  const values = {};
+  for (const name of NAMES) values[name] = form.elements[name].value;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ values, scenarios })); } catch { /* storage unavailable */ }
+}
+
+function readInputs() {
+  const out = {};
+  for (const name of NAMES) {
+    const el = form.elements[name];
+    const raw = el.value;
+    if (el.hasAttribute('data-pct') && raw.trim() !== '') {
+      const n = Number(raw.replace(/[%\s]/g, ''));
+      out[name] = Number.isFinite(n) ? n / 100 : raw;
+    } else {
+      out[name] = raw;
+    }
+  }
+  return out;
+}
+
+function syncSliders() {
+  for (const el of form.querySelectorAll('input[type=range]')) {
+    const box = $(el.dataset.pair);
+    const n = Number(box.value);
+    if (Number.isFinite(n)) el.value = n;
+  }
+}
+
+function defaultScenarios(i) {
+  const base = { price: i.price, visitors: i.visitors };
+  const c = i.conversionRate;
+  return {
+    conservative: { ...base, conversionRate: +(c / 2).toFixed(4) },
+    expected: { ...base, conversionRate: c },
+    optimistic: { ...base, conversionRate: +(c * 2).toFixed(4) },
+  };
+}
+
+function showErrors(errors) {
+  for (const name of NAMES) {
+    const err = $(`err-${name}`);
+    const box = form.elements[name].closest('.box');
+    if (err) err.textContent = errors[name] || '';
+    if (box) box.classList.toggle('invalid', Boolean(errors[name]));
+  }
+}
+
+function renderMonth(r) {
+  const x = r.results;
+  const loss = x.operatingProfit < 0;
+  const name = r.inputs.productName?.trim();
+  $('monthBody').innerHTML = `
+    <div class="headline" aria-live="polite">
+      <span class="label">${name ? `${escapeHtml(name)}: estimated` : 'Estimated'} monthly profit at these numbers</span>
+      <span class="big ${loss ? 'loss' : ''}">${money(x.operatingProfit)}</span>
+      <p class="because">From about ${formatCount(x.orders)} orders and ${money(x.netRevenue)} in sales after refunds.
+        ${loss ? 'At these numbers the business loses money each month. Try a higher price, lower ad spend, or more visitors who buy.' : ''}</p>
+    </div>
+    <table class="ledger" aria-label="Where the money goes">
+      <tr><td>Sales before refunds</td><td>${money(x.grossRevenue)}</td></tr>
+      <tr class="minus"><td>Refunds</td><td>${money(x.refundedRevenue)}</td></tr>
+      <tr class="minus"><td>Payment fees</td><td>${money(x.processingFees)}</td></tr>
+      ${x.otherCosts > 0 ? `<tr class="minus"><td>Other per-sale costs</td><td>${money(x.otherCosts)}</td></tr>` : ''}
+      <tr class="minus"><td>Ad spend</td><td>${money(r.inputs.adSpend)}</td></tr>
+      <tr class="sub"><td>Left to cover fixed costs</td><td>${money(x.contributionProfit)}</td></tr>
+      <tr class="minus"><td>Fixed costs</td><td>${money(r.inputs.fixedCosts)}</td></tr>
+      <tr class="total"><td>Monthly profit</td><td class="${loss ? 'neg' : 'pos'}">${money(x.operatingProfit)}</td></tr>
+    </table>
+    <dl class="stats">
+      <div class="stat"><dt>Each visitor is worth</dt><dd>${x.revenuePerVisitor === null ? '—' : money(x.revenuePerVisitor)}</dd>
+        <div class="why">${r.notes.revenuePerVisitor || 'Sales after refunds, divided by visitors.'}</div></div>
+      <div class="stat"><dt>Ad cost per customer</dt><dd>${x.blendedCAC === null ? '—' : money(x.blendedCAC)}</dd>
+        <div class="why">${r.notes.blendedCAC || DEFINITIONS.blendedCAC}</div></div>
+      <div class="stat"><dt>Most you can pay per customer</dt><dd class="${x.breakEvenCAC <= 0 ? 'neg' : ''}">${money(x.breakEvenCAC)}</dd>
+        <div class="why">${r.notes.breakEvenCAC || DEFINITIONS.breakEvenCAC}</div></div>
+    </dl>`;
+  const dock = $('dockProfit');
+  dock.textContent = money(x.operatingProfit);
+  dock.classList.toggle('loss', loss);
+}
+
+function goalBlock(title, g, visitors) {
+  if (!g) return `<div class="goal"><h3>${title}</h3><p class="note">Add a goal on the left to see what it takes.</p></div>`;
+  if (!g.reachable) return `<div class="goal"><h3>${title}: ${money(g.goal)}</h3><p class="note">${g.notes.requiredOrders}</p></div>`;
+
+  const progress = g.requiredVisitors ? Math.min(1, visitors / g.requiredVisitors) : (g.requiredVisitors === 0 ? 1 : 0);
+  const done = g.additionalVisitors === 0;
+  let away = '';
+  if (g.requiredVisitors === null) away = `<p class="note">${g.notes.requiredVisitors}</p>`;
+  else if (done) away = `<p class="away pos">Your current traffic already reaches this goal.</p>`;
+  else away = `<p class="away">You're ${whole(g.additionalVisitors)} visitors away.</p>`;
+
+  let lever = '';
+  if (!done && g.requiredConversionRate !== null) {
+    lever = `<p class="lever">Or keep today's traffic and get ${pct(g.requiredConversionRate)} of visitors to buy.</p>`;
+  } else if (!done && g.notes.requiredConversionRate) {
+    lever = `<p class="lever">${g.notes.requiredConversionRate}</p>`;
+  }
+
+  return `<div class="goal">
+    <h3>${title}: ${money(g.goal)} a month</h3>
+    <div class="needs">
+      <span><b>${whole(g.requiredOrders)}</b> orders</span>
+      <span><b>${whole(g.requiredVisitors)}</b> visitors</span>
+    </div>
+    ${g.requiredVisitors !== null ? `<div class="track" role="img" aria-label="${Math.round(progress * 100)}% of the visitors needed"><div class="fill ${done ? 'done' : ''}" style="width:${progress * 100}%"></div></div>` : ''}
+    ${away}${lever}
+    ${g.notes.adSpend ? `<p class="note">${g.notes.adSpend}</p>` : ''}
+  </div>`;
+}
+
+function renderGoals(r) {
+  $('goalsBody').innerHTML =
+    goalBlock('Revenue goal', r.goals.revenue, r.inputs.visitors) +
+    goalBlock('Profit goal', r.goals.profit, r.inputs.visitors);
+}
+
+function renderScenarios(baseInputs, validInputs) {
+  if (!scenarios) scenarios = defaultScenarios(validInputs);
+  const keys = Object.keys(SCEN_NAMES);
+  const s = compareScenarios(baseInputs, scenarios);
+  const cell = (k, field, fmt) => `<input aria-label="${SCEN_NAMES[k]} ${field}" data-scen="${k}" data-field="${field}" inputmode="decimal" value="${fmt(scenarios[k][field])}">`;
+  const outRow = (label, fn) => `<tr class="out"><td>${label}</td>${keys.map((k) => `<td>${s[k].ok ? fn(s[k]) : '—'}</td>`).join('')}</tr>`;
+
+  $('scen').innerHTML = `
+    <thead><tr><th></th>${keys.map((k) => `<th>${SCEN_NAMES[k]}</th>`).join('')}</tr></thead>
+    <tbody>
+      <tr><td>Price ($)</td>${keys.map((k) => `<td>${cell(k, 'price', (v) => v)}</td>`).join('')}</tr>
+      <tr><td>Visitors</td>${keys.map((k) => `<td>${cell(k, 'visitors', (v) => v)}</td>`).join('')}</tr>
+      <tr><td>Who buy (%)</td>${keys.map((k) => `<td>${cell(k, 'conversionRate', pctToUI)}</td>`).join('')}</tr>
+      ${outRow('Orders', (x) => formatCount(x.results.orders))}
+      ${outRow('Sales after refunds', (x) => money(x.results.netRevenue))}
+      ${outRow('Monthly profit', (x) => `<span class="${x.results.operatingProfit < 0 ? 'neg' : 'pos'}">${money(x.results.operatingProfit)}</span>`)}
+    </tbody>`;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function render({ rebuildScenarios = true } = {}) {
+  const raw = readInputs();
+  const r = calculate(raw);
+  showErrors(r.ok ? {} : r.errors);
+  if (!r.ok) {
+    $('monthBody').innerHTML = `<p class="blocked">Fix the highlighted fields to see your numbers.</p>`;
+    $('goalsBody').innerHTML = '';
+    $('dockProfit').textContent = '—';
+    return;
+  }
+  renderMonth(r);
+  renderGoals(r);
+  if (rebuildScenarios) renderScenarios(raw, r.inputs);
+  else updateScenarioOutputs(raw);
+  save();
+}
+
+// Re-render scenario outputs without replacing the input being typed in.
+function updateScenarioOutputs(raw) {
+  const active = document.activeElement;
+  const pos = active?.selectionStart;
+  renderScenarios(raw, calculate(raw).inputs);
+  if (active?.dataset?.scen) {
+    const again = document.querySelector(`[data-scen="${active.dataset.scen}"][data-field="${active.dataset.field}"]`);
+    again?.focus();
+    try { again?.setSelectionRange(pos, pos); } catch { /* not supported for this input */ }
+  }
+}
+
+form.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.dataset.pair) {
+    const other = $(t.dataset.pair);
+    if (t.type === 'range') other.value = t.value;
+    else if (Number.isFinite(Number(t.value))) other.value = t.value;
+  }
+  render();
+});
+
+$('scen').addEventListener('input', (e) => {
+  const t = e.target;
+  if (!t.dataset.scen) return;
+  const n = Number(t.value);
+  if (!Number.isFinite(n) || t.value.trim() === '') return;
+  scenarios[t.dataset.scen][t.dataset.field] = t.dataset.field === 'conversionRate' ? n / 100 : n;
+  render({ rebuildScenarios: false });
+});
+
+$('resetScen').addEventListener('click', () => {
+  const r = calculate(readInputs());
+  if (!r.ok) return;
+  scenarios = defaultScenarios(r.inputs);
+  render();
+});
+
+$('disclaimer').textContent = DEFINITIONS.disclaimer;
+load();
+render();
+</script>
+</body>
+</html>

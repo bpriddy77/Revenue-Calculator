@@ -47,6 +47,14 @@ The engine never returns `Infinity` or `NaN`. When a value can't be determined, 
 
 **Definitions.** `DEFINITIONS` provides plain-language text for each output, for tooltips and the exported report (RC-10).
 
+## Prototype page and deploying
+
+`index.html` is a working prototype of the calculator screen. It imports `src/calc.js` directly, so there is no build step.
+
+On Vercel: Framework Preset **Other**, Build Command **empty**, Output Directory **empty**. If these files sit inside a subfolder of the repo, set Root Directory to that folder.
+
+The prototype remembers the last numbers in the visitor's own browser. Real accounts and server-side saving come later.
+
 ## Not yet built
 
-Saving and loading (RC-08), the report export (RC-09), the interface itself, and multi-currency formatting beyond the `currency` field.
+Account-based saving (RC-08), the report export (RC-09), and multi-currency formatting beyond the `currency` field.

@@ -168,3 +168,13 @@ test('validation catches bad input and accepts form strings', () => {
   assert.equal(bad.ok, false);
   assert.ok(bad.errors.price);
 });
+
+test('conversion lever: rate needed at current traffic', () => {
+  const r = calculate(base);
+  close(r.goals.revenue.requiredConversionRate, 0.122); // 122 orders / 1,000 visitors
+  const tiny = calculate({ ...base, visitors: 50 });
+  assert.equal(tiny.goals.revenue.requiredConversionRate, null);
+  assert.match(tiny.goals.revenue.notes.requiredConversionRate, /More visitors/);
+  const none = calculate({ ...base, visitors: 0 });
+  assert.equal(none.goals.revenue.requiredConversionRate, null);
+});
