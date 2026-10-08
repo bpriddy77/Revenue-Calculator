@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="0.4.0">
+<meta name="app-version" content="0.5.0">
 <title>Authority Funnel Revenue Calculator | Priddy Impact Group</title>
 <meta name="description" content="Plan the five evergreen digital products in your authority funnel and see how they work together on order value, revenue and profit.">
 <link rel="icon" href="assets/pig-monogram-gold.png">
@@ -206,7 +206,7 @@
   .switch:has(input:disabled) { cursor: not-allowed; }
   @media (max-width: 420px) { .switch .sw-txt { display: none; } .pad { padding: 22px 18px; } }
 
-  /* Planning ranges under each offer slider */
+  /* Scenario rates under each offer slider */
   .ticks { position: relative; height: 9px; margin: -2px 11px 6px; }
   .ticks i { position: absolute; top: 0; left: calc(var(--v) * 1%); width: 2px; height: 9px; border-radius: 1px; transform: translateX(-1px); background: var(--gold-dark); opacity: .55; }
   .ticks i.t-planning { opacity: .8; }
@@ -230,7 +230,40 @@
   .newbie div { flex: 1 1 260px; font-size: 0.85rem; line-height: 1.5; }
   .newbie b { display: block; font-weight: 600; }
   .newbie span { color: var(--slate); }
-  .ranges-note { margin-top: 14px; }
+  /* Take-rate panel */
+  .rates-panel { margin: 0 0 20px; padding: 16px; border-radius: var(--radius-md); background: var(--gold-tint); border: 1px solid color-mix(in oklab, var(--gold) 55%, var(--white)); }
+  .rates-intro { margin: 0 0 12px; font-size: 0.88rem; line-height: 1.55; }
+  .rates-intro b { font-weight: 600; }
+  .seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--white); border: 1px solid var(--slate-line); }
+  @media (max-width: 520px) { .seg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .seg-btn {
+    font: 500 0.82rem var(--font); color: var(--teal); padding: 8px 6px; border: 0; border-radius: 9px; cursor: pointer;
+    background: transparent; transition: background-color .2s, color .2s, box-shadow .2s;
+  }
+  .seg-btn:hover { background: var(--teal-tint); }
+  .seg-btn[aria-pressed="true"] { background: var(--teal); color: var(--white); box-shadow: 0 4px 12px -6px rgb(0 43 56 / 60%); }
+  .seg-btn.data[aria-pressed="true"] { background: var(--gold-dark); }
+  .seg-btn:disabled { opacity: .45; cursor: not-allowed; }
+  .seg-status { margin: 8px 0 0; font-size: 0.8rem; color: var(--slate); min-height: 1.2em; }
+  .assume { margin: 6px 0 0; font-size: 0.76rem; color: var(--gold-dark); font-style: italic; }
+  .sales { margin-top: 14px; padding-top: 14px; border-top: 1px dashed color-mix(in oklab, var(--gold) 70%, var(--white)); }
+  .sales-intro { margin: 0 0 10px; font-size: 0.85rem; }
+  .sales-wrap { overflow-x: auto; }
+  .sales-t { width: 100%; min-width: 380px; border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  .sales-t th { text-align: right; font-weight: 600; font-size: 0.78rem; padding: 4px 6px; color: var(--slate); white-space: nowrap; }
+  .sales-t th:first-child, .sales-t td:first-child { text-align: left; }
+  .sales-t td { padding: 4px 6px; vertical-align: middle; }
+  .sales-t td.rate { text-align: right; font-weight: 600; white-space: nowrap; min-width: 64px; }
+  .sales-t small { display: block; color: var(--slate); font-size: 0.72rem; line-height: 1.3; }
+  .sales-t input {
+    width: 100%; min-width: 70px; text-align: right; font: 500 0.88rem var(--font); color: var(--teal);
+    border: 1.5px solid transparent; border-radius: 8px; padding: 6px 8px; background: var(--white);
+  }
+  .sales-t input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in oklab, var(--gold) 25%, transparent); }
+  .sales-t input.bad { border-color: var(--loss); }
+  .sales-t tr.msg td { padding: 0 6px 8px; font-size: 0.75rem; color: var(--slate); }
+  .sales-t tr.msg td.err-msg { color: var(--loss); }
+  .sales-t tr.msg td:empty { padding: 0; }
 
   /* Softer focus on sliders: a ring on the knob instead of a box around the track */
   input[type=range]:focus-visible { outline: none; }
@@ -504,15 +537,25 @@
       <section class="card pad" aria-labelledby="s2">
         <div class="sec-head"><span class="sec-num">2</span><h2 id="s2">Additional offers</h2></div>
         <p class="hint">Turn on the offers in your funnel. Each one is shown only to the buyers who reach it.</p>
-        <div class="newbie">
-          <div>
-            <b>Not sure how many buyers will say yes?</b>
-            <span>Every offer starts at the conservative planning rate, a sensible place to begin if you're new. Tap a range under any slider to try it.</span>
+        <div class="rates-panel">
+          <p class="rates-intro"><b>Not sure what percentage to enter?</b> Start with our conservative planning scenario. Once you have actual sales data, replace these assumptions with your own results.</p>
+          <div class="seg" role="group" aria-label="Take rates for every offer">
+            <button type="button" class="seg-btn" data-mode="conservative" aria-pressed="false">Conservative</button>
+            <button type="button" class="seg-btn" data-mode="expected" aria-pressed="false">Expected</button>
+            <button type="button" class="seg-btn" data-mode="stretch" aria-pressed="false">Stretch</button>
+            <button type="button" class="seg-btn data" data-mode="data" aria-pressed="false">My sales data</button>
           </div>
-          <button type="button" class="btn small" id="useStarter">Reset all to conservative</button>
+          <p class="seg-status" id="segStatus" role="status"></p>
+          <p class="assume" id="assumeLabel"></p>
+          <input type="hidden" id="rateMode" data-field="ui.rateMode">
+
+          <div class="sales" id="salesPanel" hidden>
+            <p class="sales-intro">Enter how many people <b>saw</b> each offer and how many <b>bought</b> it, using the same time period for every row (for example, the last 30 days). Your actual take rates replace the assumptions as you type.</p>
+            <div class="sales-wrap"><table class="sales-t" id="salesTable"></table></div>
+            <p class="note">The downsell take rate counts only people who declined the upsell and were shown the downsell. The one-time offer's reach comes from how many of your buyers saw it.</p>
+          </div>
         </div>
         <div class="flow" id="flow"></div>
-        <p class="note ranges-note">Planning ranges are starting points for planning an authority funnel. They are not benchmarks or predictions, and your own results will differ.</p>
       </section>
 
       <section class="card pad" aria-labelledby="s3">
@@ -672,9 +715,9 @@
   <!-- Section 6: scenarios -->
   <section class="card pad wide gated" aria-labelledby="s6">
     <div class="sec-head"><span class="sec-num">6</span><h2 id="s6">Scenario comparison</h2></div>
-    <p class="hint">Each version has its own traffic, conversion and acceptance rates. Prices and costs carry over from above.</p>
+    <p class="hint">Each version starts from the Conservative, Expected and Stretch take rates and your own traffic. Edit any rate; prices and costs carry over from above. These rates are illustrative planning assumptions, not verified industry benchmarks or predictions.</p>
     <div class="scen-wrap"><table class="scen" id="scen"></table></div>
-    <div class="actions"><button type="button" class="btn" id="resetScen">Reset to my current numbers</button><button type="button" class="btn" id="rangeScen">Use planning ranges for acceptance</button></div>
+    <div class="actions"><button type="button" class="btn" id="resetScen">Reset to Conservative, Expected and Stretch</button></div>
   </section>
 
   <!-- Section 7: save & export -->
@@ -717,16 +760,16 @@
 
 <script type="module">
 import {
-  calculate, compareScenarios, defaultScenarios, DEFAULT_INPUTS, DEFINITIONS, OFFER_KEYS, OFFER_LABELS,
+  calculate, compareScenarios, defaultScenarios, takeRatesFromData, DATA_ROWS, DEFAULT_INPUTS, DEFINITIONS, OFFER_KEYS, OFFER_LABELS,
   formatMoney, formatCount,
-} from './src/calc.js?v=0.4.0';
-import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.4.0';
-import { PLANNING_RANGES, RANGE_KEYS, RANGE_LABELS, describeRate } from './src/guidance.js?v=0.4.0';
+} from './src/calc.js?v=0.5.0';
+import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.5.0';
+import { PLANNING_RANGES, RANGE_KEYS, RANGE_LABELS, ASSUMPTION_LABEL, describeRate, matchingScenario } from './src/guidance.js?v=0.5.0';
 
 const $ = (id) => document.getElementById(id);
 const CURRENT_KEY = 'pig-dp002-current';
 const SAVED_KEY = 'pig-dp002-saved';
-const SCEN = { conservative: 'Conservative', expected: 'Expected', optimistic: 'Optimistic' };
+const SCEN = { conservative: 'Conservative', expected: 'Expected', stretch: 'Stretch' };
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const OFFER_UI = {
@@ -780,7 +823,7 @@ function buildOffers() {
         <input type="range" id="r-${k}-rate" min="0" max="100" step="1" aria-label="${OFFER_LABELS[k]} acceptance slider" data-pair="f-${k}-rate" style="margin:-8px 0 0" aria-describedby="gs-${k}">
         <div class="ticks" aria-hidden="true">${RANGE_KEYS.map((b) => `<i class="t-${b}" style="--v:${PLANNING_RANGES[k][b] * 100}"></i>`).join('')}</div>
         <div class="guide">
-          <span class="g-label">Planning ranges</span>
+          <span class="g-label">Scenario rates</span>
           ${RANGE_KEYS.map((b) => `<button type="button" class="rchip" data-offer="${k}" data-band="${b}" data-v="${PLANNING_RANGES[k][b]}">${RANGE_LABELS[b]} <b>${pctToUI(PLANNING_RANGES[k][b])}%</b></button>`).join('')}
         </div>
         <p class="g-status" id="gs-${k}"></p>
@@ -792,6 +835,11 @@ function buildOffers() {
             <div class="box"><span>$</span><input id="f-${k}-ful" data-field="offers.${k}.fulfillmentCost" inputmode="decimal"></div>
             <div class="err" data-err="offers.${k}.fulfillmentCost"></div>
           </div>
+          ${k === 'oto' ? `<div class="field">
+            <label for="f-oto-reach">Buyers who reach this offer <span class="sub">(100% unless some leave before it)</span></label>
+            <div class="box"><input id="f-oto-reach" data-field="offers.oto.reachRate" data-pct inputmode="decimal"><span class="after">%</span></div>
+            <div class="err" data-err="offers.oto.reachRate"></div>
+          </div>` : ''}
         </details>
       </div>
     </div>`).join('');
@@ -1021,8 +1069,8 @@ function render() {
   const named = $('f-productName').value.trim() !== '';
   document.documentElement.classList.toggle('locked', !named);
   for (const sl of document.querySelectorAll('input[type=range]')) sl.disabled = !named;
-  for (const id of ['saveBtn', 'reportBtn', 'resetScen', 'rangeScen', 'useStarter']) $(id).disabled = !named;
-  for (const c of document.querySelectorAll('.rchip')) c.disabled = !named;
+  for (const id of ['saveBtn', 'reportBtn', 'resetScen']) $(id).disabled = !named;
+  for (const c of document.querySelectorAll('.rchip, .seg-btn')) c.disabled = !named;
   for (const el of document.querySelectorAll('.gated input, .gated button')) el.tabIndex = named ? 0 : -1;
   if (!named) {
     for (const id of ['d-aov', 'd-profit']) $(id).textContent = '—';
@@ -1032,8 +1080,10 @@ function render() {
     return;
   }
 
+  if (mode() === 'data') applySalesData();
   const raw = readInputs();
   const r = calculate(raw);
+  updateSegment();
   showErrors(r.ok ? {} : r.errors);
   $('o-body').style.opacity = r.ok ? '' : '.35';
   if (!r.ok) {
@@ -1057,9 +1107,22 @@ function render() {
   try { localStorage.setItem(CURRENT_KEY, JSON.stringify({ schema: DATA_SCHEMA, values: snapshot(), scenarios })); } catch { /* storage unavailable */ }
 }
 
+/* ---------- Saved data migration ---------- */
+// Schema 3 (v0.5.0): scenario "optimistic" renamed "stretch"; adds ui.rateMode and sales data.
+function migrate(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  if (entry.schema === DATA_SCHEMA) return entry;
+  if (entry.schema === 2) {
+    const sc = entry.scenarios ? { ...entry.scenarios } : null;
+    if (sc && sc.optimistic && !sc.stretch) { sc.stretch = sc.optimistic; delete sc.optimistic; }
+    return { ...entry, schema: DATA_SCHEMA, scenarios: sc };
+  }
+  return null;
+}
+
 /* ---------- Save & reopen (this browser) ---------- */
 function readSaved() {
-  try { return (JSON.parse(localStorage.getItem(SAVED_KEY) || '[]') || []).filter((x) => x.schema === DATA_SCHEMA); } catch { return []; }
+  try { return (JSON.parse(localStorage.getItem(SAVED_KEY) || '[]') || []).map(migrate).filter(Boolean); } catch { return []; }
 }
 function writeSaved(list) {
   try { localStorage.setItem(SAVED_KEY, JSON.stringify(list)); return true; } catch { return false; }
@@ -1120,7 +1183,8 @@ function buildReport() {
       ${r.offers.map((o) => `<tr><td>${esc(o.label)}${o.name ? `: ${esc(o.name)}` : ''}</td><td>${o.active ? money(o.price) : '—'}</td><td>${o.active ? pct(o.rate) : 'Off'}</td><td>${o.active ? formatCount(o.eligible) + (o.key === 'main' ? ' visitors' : '') : '—'}</td><td>${o.active ? formatCount(o.buyers) : '—'}</td><td>${o.active ? money(o.revenue) : '—'}</td></tr>`).join('')}
       <tr><td><b>Total</b></td><td></td><td></td><td></td><td></td><td><b>${money(x.grossRevenue)}</b></td></tr>
     </tbody></table>
-    <p style="font-size:9pt;color:var(--slate)">Most one buyer could spend: ${money(x.maxCheckoutValue)}.</p>
+    <p style="font-size:9pt;color:var(--slate)">Most one buyer could spend: ${money(x.maxCheckoutValue)}.<br>
+      Take rates: ${esc($('segStatus').textContent)} ${$('assumeLabel').hidden ? '' : esc(ASSUMPTION_LABEL)}</p>
     <h2>Monthly profit</h2>
     <table><tbody>
       <tr><td>Funnel revenue</td><td>${money(x.grossRevenue)}</td></tr>
@@ -1163,6 +1227,8 @@ document.addEventListener('input', (e) => {
     render();
     return;
   }
+  const target = t.dataset.field || (t.dataset.pair && $(t.dataset.pair).dataset.field) || '';
+  if (RATE_FIELD.test(target) && mode() === 'data') $('rateMode').value = 'scenario';
   if (t.dataset.pair) {
     const other = $(t.dataset.pair);
     if (t.type === 'range') { other.value = t.value; paintSlider(t); }
@@ -1187,21 +1253,73 @@ function setOfferRate(k, v) {
 document.addEventListener('click', (e) => {
   const c = e.target.closest('.rchip');
   if (!c) return;
+  if (mode() === 'data') $('rateMode').value = 'scenario';
   setOfferRate(c.dataset.offer, Number(c.dataset.v));
   render();
 });
-$('useStarter').addEventListener('click', () => {
-  for (const k of OFFER_KEYS) setOfferRate(k, PLANNING_RANGES[k].conservative);
-  render();
-});
-$('rangeScen').addEventListener('click', () => {
-  if (!scenarios) return;
-  const map = { conservative: 'conservative', expected: 'planning', optimistic: 'stretch' };
-  for (const [sc, band] of Object.entries(map)) {
-    scenarios[sc].offers = scenarios[sc].offers || {};
-    for (const k of OFFER_KEYS) scenarios[sc].offers[k] = { ...(scenarios[sc].offers[k] || {}), rate: PLANNING_RANGES[k][band] };
+/* ---------- Take rates: scenario switch and sales data ---------- */
+const mode = () => $('rateMode').value || 'scenario';
+const RATE_FIELD = /^(conversionRate|offers\.(bump|upsell|downsell|oto)\.rate|offers\.oto\.reachRate)$/;
+const ROW_LABEL = {
+  main: ['Main product', 'Sales page visitors and buyers'],
+  bump: ['Order bump', 'Shown at checkout'],
+  upsell: ['Upsell', 'Shown after purchase'],
+  downsell: ['Downsell', 'Shown to upsell decliners only'],
+  oto: ['One-time offer', 'Shown at the final step'],
+};
+function buildSalesTable() {
+  $('salesTable').innerHTML = '<thead><tr><th>Offer</th><th>Saw it</th><th>Bought</th><th>Take rate</th></tr></thead><tbody>' +
+    DATA_ROWS.map((k) => `<tr><td>${ROW_LABEL[k][0]}<small>${ROW_LABEL[k][1]}</small></td>
+      <td><input inputmode="numeric" data-field="sales.${k}.viewed" id="sd-${k}-viewed" aria-label="${ROW_LABEL[k][0]}: how many saw it" placeholder="—"></td>
+      <td><input inputmode="numeric" data-field="sales.${k}.purchased" id="sd-${k}-purchased" aria-label="${ROW_LABEL[k][0]}: how many bought" placeholder="—"></td>
+      <td class="rate" id="sr-${k}">—</td></tr><tr class="msg"><td colspan="4" id="sm-${k}"></td></tr>`).join('') + '</tbody>';
+}
+function setRateBox(id, v) {
+  const box = $(id); box.value = pctToUI(v);
+  const sl = box.dataset.pair ? $(box.dataset.pair) : null;
+  if (sl) { sl.value = box.value; paintSlider(sl); }
+}
+function applySalesData() {
+  const t = takeRatesFromData(getPath(readInputs(), 'sales') || {});
+  for (const k of DATA_ROWS) {
+    const err = t.errors[`${k}.viewed`] || t.errors[`${k}.purchased`];
+    $(`sd-${k}-viewed`).classList.toggle('bad', Boolean(t.errors[`${k}.viewed`]));
+    $(`sd-${k}-purchased`).classList.toggle('bad', Boolean(t.errors[`${k}.purchased`]));
+    $(`sr-${k}`).textContent = t.rates[k] === null ? '—' : pct(t.rates[k]);
+    const m = $(`sm-${k}`); m.textContent = err || t.notes[k] || ''; m.className = err ? 'err-msg' : '';
+    if (t.rates[k] === null) continue;
+    if (k === 'main') setRateBox('f-conversionRate', t.rates.main);
+    else setRateBox(`f-${k}-rate`, t.rates[k]);
   }
-  $('scen').innerHTML = '';
+  if (t.reachRate !== null) setRateBox('f-oto-reach', Math.min(1, t.reachRate));
+  return t;
+}
+function updateSegment() {
+  const rates = {};
+  for (const k of OFFER_KEYS) rates[k] = Number($(`f-${k}-rate`).value) / 100;
+  const active = mode() === 'data' ? 'data' : matchingScenario(rates);
+  for (const b of document.querySelectorAll('.seg-btn')) b.setAttribute('aria-pressed', String(b.dataset.mode === active));
+  $('salesPanel').hidden = mode() !== 'data';
+  const used = mode() === 'data' ? DATA_ROWS.filter((k) => $(`sr-${k}`).textContent !== '—') : [];
+  $('segStatus').textContent =
+    active === 'data' ? (used.length === DATA_ROWS.length ? 'Using your actual take rates from your sales data for every step.'
+      : used.length ? `Using your sales data for: ${used.map((k) => ROW_LABEL[k][0].toLowerCase()).join(', ')}. Other steps keep their current rates.`
+      : 'Enter your numbers below to use your actual take rates.')
+    : active ? `Every offer is set to the ${RANGE_LABELS[active]} scenario.`
+    : 'Custom rates: you have set your own take rates.';
+  $('assumeLabel').hidden = active === 'data' && used.length === OFFER_KEYS.length + 1;
+}
+document.querySelector('.seg').addEventListener('click', (e) => {
+  const b = e.target.closest('.seg-btn');
+  if (!b || b.disabled) return;
+  if (b.dataset.mode === 'data') {
+    $('rateMode').value = 'data';
+    render();
+    $('sd-main-viewed').focus();
+    return;
+  }
+  $('rateMode').value = 'scenario';
+  for (const k of OFFER_KEYS) setOfferRate(k, PLANNING_RANGES[k][b.dataset.mode]);
   render();
 });
 $('goName').addEventListener('click', () => { const f = $('f-productName'); f.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' }); f.focus({ preventScroll: true }); });
@@ -1221,9 +1339,11 @@ if (document.documentElement.classList.contains('embed') && window.parent !== wi
 
 /* ---------- Start ---------- */
 buildOffers();
+buildSalesTable();
+$('assumeLabel').textContent = ASSUMPTION_LABEL;
 let current = null;
 try { current = JSON.parse(localStorage.getItem(CURRENT_KEY) || 'null'); } catch { current = null; }
-if (current && current.schema !== DATA_SCHEMA) current = null;
+current = migrate(current);
 applyValues(current?.values);
 scenarios = current?.scenarios || null;
 $('disclaimer').textContent = DEFINITIONS.disclaimer;

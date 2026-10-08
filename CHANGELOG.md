@@ -6,6 +6,23 @@ All builds follow [semantic versioning](https://semver.org). The version lives i
 - **ENGINE_VERSION**: the calculation rules. Bump whenever a formula changes.
 - **DATA_SCHEMA**: the shape of saved data. Bump when the saved format changes.
 
+## [0.5.0] - 2026-10-08
+### Added
+- **Take-rate switch** at the top of the offers section: Conservative, Expected, Stretch or **My sales data**. Conservative is the default for new users. Shows "Custom rates" when a seller sets their own.
+- **My sales data**: for each step (main product, order bump, upsell, downsell, one-time offer), enter how many people saw it and how many bought. Actual take rates are calculated live and replace the assumptions.
+  - The downsell rate is calculated only against people who declined the upsell and were shown the downsell. More downsell viewers than upsell decliners is flagged as an error; fewer is noted.
+  - Add-on viewers above the number of main-product buyers are flagged.
+  - The one-time offer's reach rate is taken from OTO viewers ÷ main buyers.
+- New field in the one-time offer card: **Buyers who reach this offer** (default 100%).
+- Engine: `takeRatesFromData()` and 7 new tests (42 total). Browser smoke test covers the switch and sales-data mode.
+### Changed
+- Scenario names are now **Conservative / Expected / Stretch** everywhere (the middle rate was "Planning"; the third scenario was "Optimistic").
+- Initial scenario comparison uses the agreed take rates (bump 10/20/35%, upsell 3/6/15%, downsell 2/4/8%, OTO 2/5/10%) with the customer's own traffic and conversion in all three.
+- Wording: "Not sure what percentage to enter? Start with our conservative planning scenario. Once you have actual sales data, replace these assumptions with your own results." The rates are labeled **illustrative planning assumptions, not verified industry benchmarks or predictions** in the offers section, scenarios and PDF report.
+- Report states where the take rates came from (a scenario, custom, or the seller's own sales data).
+### Data schema 3
+- Saved funnels from 0.4.x and earlier (schema 2) are migrated automatically: the "optimistic" scenario becomes "stretch".
+
 ## [0.4.0] - 2026-10-08
 ### Added
 - **Planning ranges** for each offer's acceptance rate (Conservative, Planning, Stretch), kept in `src/guidance.js`:

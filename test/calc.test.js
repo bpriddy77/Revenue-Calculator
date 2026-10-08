@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  calculate, compareScenarios, defaultScenarios, validateInputs, DEFAULT_INPUTS, OFFER_KEYS,
+  calculate, compareScenarios, defaultScenarios, validateInputs, takeRatesFromData, DEFAULT_INPUTS, OFFER_KEYS,
 } from '../src/calc.js';
 import { ENGINE_VERSION } from '../src/version.js';
-import { PLANNING_RANGES, describeRate } from '../src/guidance.js';
+import { PLANNING_RANGES, describeRate, matchingScenario, ASSUMPTION_LABEL } from '../src/guidance.js';
 
 const close = (actual, expected, msg = '') =>
   assert.ok(Math.abs(actual - expected) < 1e-6, `${msg} expected ${expected}, got ${actual}`);
@@ -247,22 +247,22 @@ test('rounding ignores floating-point dust', () => {
 
 /* ---------- Scenarios ---------- */
 
-test('default scenarios scale conversion and acceptance rates (½×, 1×, 1½×)', () => {
+test('initial scenarios use the Conservative / Expected / Stretch take rates', () => {
+  const sc = defaultScenarios(base);
+  assert.deepEqual(Object.keys(sc), ['conservative', 'expected', 'stretch']);
+  for (const b of ['conservative', 'expected', 'stretch']) {
+    for (const k of OFFER_KEYS) assert.equal(sc[b].offers[k].rate, PLANNING_RANGES[k][b], `${b} ${k}`);
+    assert.equal(sc[b].conversionRate, 0.02, 'keeps the customer conversion');
+    assert.equal(sc[b].visitors, 5000, 'keeps the customer traffic');
+  }
   const s = compareScenarios(base);
-  close(s.conservative.results.buyers, 50);
+  close(s.conservative.results.aov, 27 + 17 * 0.10 + 97 * 0.03 + 47 * 0.97 * 0.02 + 297 * 0.02);
+  close(s.expected.results.aov, 27 + 17 * 0.20 + 97 * 0.06 + 47 * 0.94 * 0.04 + 297 * 0.05);
+  close(s.stretch.results.aov, 27 + 17 * 0.35 + 97 * 0.15 + 47 * 0.85 * 0.08 + 297 * 0.10);
   close(s.expected.results.buyers, 100);
-  close(s.optimistic.results.buyers, 150);
-  close(s.conservative.results.aov, 61.0625);
-  close(s.expected.results.aov, 93.95);
-  close(s.optimistic.results.aov, 125.6625);
 });
 
-test('scaled rates are capped at 100%', () => {
-  const sc = defaultScenarios(withOffers({ bump: { rate: 0.9 } }));
-  assert.equal(sc.optimistic.offers.bump.rate, 1);
-});
-
-test('each scenario has independent acceptance rates', () => {
+test('each scenario has independent acceptance rates (any keys work)', () => {
   const s = compareScenarios(base, {
     a: { offers: { upsell: { rate: 0.5 } } },
     b: { conversionRate: 0.04 },
@@ -271,6 +271,68 @@ test('each scenario has independent acceptance rates', () => {
   close(offer(s.a, 'downsell').eligible, 50);
   close(s.b.results.buyers, 200);
   close(offer(s.b, 'upsell').buyers, 50, 'b keeps the base 25% upsell rate');
+});
+
+/* ---------- Take rates from sales data ---------- */
+
+const salesData = {
+  main: { viewed: 5000, purchased: 100 },
+  bump: { viewed: 100, purchased: 35 },
+  upsell: { viewed: 100, purchased: 25 },
+  downsell: { viewed: 75, purchased: 15 },
+  oto: { viewed: 100, purchased: 10 },
+};
+
+test('sales data produces actual take rates', () => {
+  const t = takeRatesFromData(salesData);
+  assert.equal(t.ok, true);
+  close(t.rates.main, 0.02);
+  close(t.rates.bump, 0.35);
+  close(t.rates.upsell, 0.25);
+  close(t.rates.downsell, 0.2, 'downsell: 15 of the 75 decliners who saw it');
+  close(t.rates.oto, 0.1);
+  close(t.reachRate, 1);
+});
+
+test('rates from sales data reproduce the worked example', () => {
+  const t = takeRatesFromData(salesData);
+  const r = calculate({ ...base, conversionRate: t.rates.main, offers: Object.fromEntries(OFFER_KEYS.map((k) => [k, { ...base.offers[k], rate: t.rates[k] }])) });
+  close(r.results.aov, 93.95);
+});
+
+test('downsell rate is measured only against upsell decliners who saw it', () => {
+  const t = takeRatesFromData({ ...salesData, downsell: { viewed: 60, purchased: 15 } });
+  close(t.rates.downsell, 0.25);
+  assert.match(t.notes.downsell, /15 upsell decliners did not see/);
+});
+
+test('more downsell viewers than upsell decliners is an error', () => {
+  const t = takeRatesFromData({ ...salesData, downsell: { viewed: 80, purchased: 10 } });
+  assert.equal(t.ok, false);
+  assert.match(t.errors['downsell.viewed'], /Only 75 people declined the upsell/);
+  assert.equal(t.rates.downsell, null);
+});
+
+test('more buyers than viewers, or add-on viewers above main buyers, are errors', () => {
+  assert.ok(takeRatesFromData({ bump: { viewed: 10, purchased: 12 } }).errors['bump.purchased']);
+  const t = takeRatesFromData({ main: { viewed: 1000, purchased: 50 }, oto: { viewed: 60, purchased: 5 } });
+  assert.match(t.errors['oto.viewed'], /Only 50 people bought the main product/);
+});
+
+test('OTO reach rate comes from OTO viewers ÷ main buyers', () => {
+  const t = takeRatesFromData({ ...salesData, oto: { viewed: 80, purchased: 8 } });
+  close(t.reachRate, 0.8);
+  close(t.rates.oto, 0.1);
+});
+
+test('blank, partial, zero and invalid rows', () => {
+  const t = takeRatesFromData({ bump: { viewed: '', purchased: '' }, upsell: { viewed: 50 }, oto: { viewed: 0, purchased: 0 }, main: { viewed: 'abc', purchased: 2.5 } });
+  assert.equal(t.rates.bump, null);
+  assert.equal(t.notes.bump, undefined, 'fully blank rows are skipped quietly');
+  assert.match(t.notes.upsell, /both numbers/);
+  assert.match(t.notes.oto, /Nobody saw/);
+  assert.ok(t.errors['main.viewed']);
+  assert.match(t.errors['main.purchased'], /whole numbers/);
 });
 
 /* ---------- Validation ---------- */
@@ -305,19 +367,26 @@ test('new sellers start at the conservative planning rates', () => {
   close(r.results.aov, 27 + 17 * 0.1 + 97 * 0.03 + 47 * 0.97 * 0.02 + 297 * 0.02); // 38.4618
 });
 
-test('planning ranges are ordered conservative < planning < stretch, within 0–100%', () => {
+test('scenario rates are ordered Conservative < Expected < Stretch, within 0–100%', () => {
   for (const k of OFFER_KEYS) {
     const r = PLANNING_RANGES[k];
-    assert.ok(r.conservative > 0 && r.conservative < r.planning && r.planning < r.stretch && r.stretch <= 1, k);
+    assert.ok(r.conservative > 0 && r.conservative < r.expected && r.expected < r.stretch && r.stretch <= 1, k);
   }
+  assert.match(ASSUMPTION_LABEL, /not verified industry benchmarks or predictions/);
+});
+
+test('matchingScenario recognizes a full set of scenario rates', () => {
+  assert.equal(matchingScenario({ bump: 0.2, upsell: 0.06, downsell: 0.04, oto: 0.05 }), 'expected');
+  assert.equal(matchingScenario({ bump: 0.2, upsell: 0.06, downsell: 0.04, oto: 0.06 }), null);
 });
 
 test('describeRate places a rate against the ranges', () => {
   assert.equal(describeRate('bump', 0.10).band, 'conservative');
-  assert.match(describeRate('bump', 0.10).message, /Matches the conservative/);
+  assert.match(describeRate('bump', 0.10).message, /Matches the Conservative/);
   assert.equal(describeRate('bump', 0.05).band, 'below');
   assert.equal(describeRate('bump', 0.15).band, 'conservative');
-  assert.equal(describeRate('bump', 0.25).band, 'planning');
+  assert.equal(describeRate('bump', 0.25).band, 'expected');
+  assert.equal(describeRate('bump', 0.20).band, 'expected');
   assert.equal(describeRate('bump', 0.35).band, 'stretch');
   assert.equal(describeRate('bump', 0.50).band, 'above');
   assert.equal(describeRate('main', 0.5), null);

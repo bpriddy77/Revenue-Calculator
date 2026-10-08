@@ -43,6 +43,17 @@ async def main():
         check(before != await txt('#o-aov'), 'offer toggle updates AOV')
         before = await txt('#o-profit'); await pg.fill('#f-adSpend', '2500'); await pg.wait_for_timeout(600)
         check(before != await txt('#o-profit'), 'typing updates profit')
+        # Scenario switch and sales-data mode
+        await pg.click('.seg-btn[data-mode=expected]'); await pg.wait_for_timeout(400)
+        check(await pg.input_value('#f-bump-rate') == '20', 'Expected scenario sets the bump to 20%')
+        await pg.click('.seg-btn[data-mode=data]'); await pg.wait_for_timeout(300)
+        for k, (seen, bought) in {'main': (5000, 100), 'bump': (100, 35), 'upsell': (100, 25), 'downsell': (75, 15), 'oto': (100, 10)}.items():
+            await pg.fill(f'#sd-{k}-viewed', str(seen)); await pg.fill(f'#sd-{k}-purchased', str(bought))
+        await pg.wait_for_timeout(500)
+        check(await txt('#sr-downsell') == '20%', 'downsell take rate counts only upsell decliners who saw it (15 of 75)')
+        await pg.fill('#sd-downsell-viewed', '80'); await pg.wait_for_timeout(300)
+        check('Only 75 people declined' in await txt('#sm-downsell'), 'flags more downsell viewers than upsell decliners')
+
         check(not errors, 'no page errors ' + ('' if not errors else str(errors)))
         await b.close()
 

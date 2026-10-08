@@ -5,7 +5,7 @@
  *                  so saved calculations and exported reports show which math produced them.
  * DATA_SCHEMA    — shape of saved data. Bump when the saved format changes.
  */
-export const APP_VERSION = '0.4.0';
-export const ENGINE_VERSION = '2.1.0';
-export const DATA_SCHEMA = 2;
+export const APP_VERSION = '0.5.0';
+export const ENGINE_VERSION = '2.2.0';
+export const DATA_SCHEMA = 3;
 export const BUILD_DATE = '2026-10-08';

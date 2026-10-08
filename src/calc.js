@@ -55,7 +55,7 @@ export const DEFAULT_INPUTS = deepFreeze({
   conversionRate: 0.02,
   fulfillmentCost: 0,
   offers: {
-    // New sellers start at the conservative planning rate (see guidance.js).
+    // New sellers start at the Conservative scenario rate (see guidance.js).
     bump: { enabled: true, name: '', price: 17, rate: PLANNING_RANGES.bump.conservative, fulfillmentCost: 0 },
     upsell: { enabled: true, name: '', price: 97, rate: PLANNING_RANGES.upsell.conservative, fulfillmentCost: 0 },
     downsell: { enabled: true, name: '', price: 47, rate: PLANNING_RANGES.downsell.conservative, fulfillmentCost: 0 },
@@ -384,23 +384,103 @@ function applyOverrides(base, o = {}) {
 }
 
 /**
- * Default scenarios from the customer's own numbers: half and one-and-a-half
- * times their conversion and acceptance rates (capped at 100%).
+ * Initial scenarios: the customer's own traffic and front-end conversion in all
+ * three, with offer acceptance rates from the Conservative / Expected / Stretch
+ * planning assumptions (guidance.js). Every value is editable afterwards.
  */
+export const SCENARIO_KEYS = Object.freeze(['conservative', 'expected', 'stretch']);
 export function defaultScenarios(inputs) {
   const i = mergeInputs(inputs);
-  const scale = (f) => {
-    const r = (v) => Math.min(1, +(toNumber(v) * f).toFixed(4));
+  const build = (band) => {
     const offers = {};
-    for (const k of OFFER_KEYS) offers[k] = { rate: r(i.offers[k].rate) };
-    return { visitors: toNumber(i.visitors), conversionRate: r(i.conversionRate), offers };
+    for (const k of OFFER_KEYS) offers[k] = { rate: PLANNING_RANGES[k][band] };
+    return { visitors: toNumber(i.visitors), conversionRate: toNumber(i.conversionRate), offers };
   };
-  return { conservative: scale(0.5), expected: scale(1), optimistic: scale(1.5) };
+  return Object.fromEntries(SCENARIO_KEYS.map((b) => [b, build(b)]));
 }
 
 /** Compare scenarios without re-entering inputs. */
 export function compareScenarios(base = {}, overrides = defaultScenarios(base)) {
   return Object.fromEntries(Object.entries(overrides).map(([name, o]) => [name, calculate(applyOverrides(base, o))]));
+}
+
+/* ---------- Take rates from a seller's own sales data ---------- */
+
+export const DATA_ROWS = Object.freeze(['main', 'bump', 'upsell', 'downsell', 'oto']);
+
+/**
+ * Turn "how many saw it / how many bought it" into take rates.
+ * Use the same time period for every row. Blank rows are skipped.
+ *
+ * - main:     saw = sales page visitors, bought = initial buyers → front-end conversion rate
+ * - bump:     saw = buyers shown the bump at checkout
+ * - upsell:   saw = buyers shown the upsell
+ * - downsell: saw = buyers shown the downsell. Only upsell decliners can see it, so
+ *             "saw" can't exceed (upsell saw − upsell bought). The rate is bought ÷ saw,
+ *             i.e. measured only against decliners who were shown the downsell.
+ * - oto:      saw = buyers shown the one-time offer; also gives the OTO reach rate
+ *             (saw ÷ main buyers) when main buyers are entered.
+ *
+ * Returns { ok, rates: { main, bump, upsell, downsell, oto }, reachRate, errors, notes }.
+ * Rates are null when they can't be worked out; errors are keyed like 'downsell.viewed'.
+ */
+export function takeRatesFromData(data = {}) {
+  const errors = {};
+  const notes = {};
+  const rows = {};
+  const label = { ...OFFER_LABELS, main: 'Main product' };
+
+  for (const k of DATA_ROWS) {
+    const src = data[k] || {};
+    const row = { viewed: null, purchased: null };
+    for (const f of ['viewed', 'purchased']) {
+      const v = src[f];
+      if (isBlank(v)) continue;
+      const n = toNumber(v);
+      if (!Number.isFinite(n) || n < 0) errors[`${k}.${f}`] = 'Enter a whole number, 0 or more.';
+      else if (!Number.isInteger(n)) errors[`${k}.${f}`] = 'Use whole numbers of people.';
+      else row[f] = n;
+    }
+    rows[k] = row;
+  }
+
+  const rates = {};
+  for (const k of DATA_ROWS) {
+    const { viewed, purchased } = rows[k];
+    rates[k] = null;
+    if (viewed === null && purchased === null) continue;
+    if (viewed === null || purchased === null) { notes[k] = 'Enter both numbers to calculate this take rate.'; continue; }
+    if (purchased > viewed) { errors[`${k}.purchased`] = `More people bought than saw the ${label[k].toLowerCase()}. Check both numbers.`; continue; }
+    if (viewed === 0) { notes[k] = 'Nobody saw this offer yet, so there is no take rate to calculate.'; continue; }
+    rates[k] = purchased / viewed;
+  }
+
+  // The downsell is only shown to people who declined the upsell.
+  const up = rows.upsell, down = rows.downsell;
+  if (up.viewed !== null && up.purchased !== null && down.viewed !== null && up.purchased <= up.viewed) {
+    const decliners = up.viewed - up.purchased;
+    if (down.viewed > decliners) {
+      errors['downsell.viewed'] = `Only ${decliners} people declined the upsell, so no more than ${decliners} can have seen the downsell.`;
+      rates.downsell = null;
+    } else if (down.viewed < decliners) {
+      notes.downsell = `${decliners - down.viewed} upsell decliners did not see the downsell. The take rate counts only the ${down.viewed} who did.`;
+    }
+  }
+
+  // Add-on offers are only shown to people who bought the main product.
+  const main = rows.main;
+  let reachRate = null;
+  if (main.purchased !== null) {
+    for (const k of ['bump', 'upsell', 'oto']) {
+      if (rows[k].viewed !== null && rows[k].viewed > main.purchased) {
+        errors[`${k}.viewed`] = `Only ${main.purchased} people bought the main product, so no more than ${main.purchased} can have seen the ${label[k].toLowerCase()}.`;
+        rates[k] = null;
+      }
+    }
+    if (rows.oto.viewed !== null && !errors['oto.viewed'] && main.purchased > 0) reachRate = rows.oto.viewed / main.purchased;
+  }
+
+  return { ok: Object.keys(errors).length === 0, rates, reachRate, errors, notes, rows };
 }
 
 /* ---------- Display helpers (formatting only, never fed back into the math) ---------- */
