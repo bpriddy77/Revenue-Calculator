@@ -1,5 +1,5 @@
 /**
- * DP-002 — $100K Funnel Revenue Calculator — calculation engine
+ * DP-002 — Authority Funnel Revenue Calculator — calculation engine
  *
  * Deterministic and dependency-free. The same module runs in the browser
  * (real-time UI) and on the server (saved funnels, report export).

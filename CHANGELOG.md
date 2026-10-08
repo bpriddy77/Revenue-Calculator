@@ -6,6 +6,13 @@ All builds follow [semantic versioning](https://semver.org). The version lives i
 - **ENGINE_VERSION**: the calculation rules. Bump whenever a formula changes.
 - **DATA_SCHEMA**: the shape of saved data. Bump when the saved format changes.
 
+## [0.3.3] - 2026-10-08
+### Changed
+- Renamed to **Authority Funnel Revenue Calculator** (page title, header, report, footer, README, engine header).
+- New subtitle: plan the five evergreen digital products that build your authority and lead clients to your bigger work.
+- Income-claim cleanup for FTC compliance: removed every "$100K" reference from the name and page. The "Use $100K a year" shortcut is replaced by a neutral yearly-goal helper (enter any yearly amount; it fills in the monthly goal). The AOV hint no longer suggests a typical $300–$500 range.
+- README gains a wording rule for page, report and sales copy.
+
 ## [0.3.2] - 2026-10-08
 ### Fixed
 - Moving any slider now updates the results immediately. Added `test/ui-smoke.py`, a browser test that checks every slider, toggle and typed field updates results live. Sliders updated their number box but did not trigger a recalculation, so results only caught up on the next typed change (such as editing the product name).

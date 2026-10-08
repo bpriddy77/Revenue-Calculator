@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="0.3.2">
-<title>$100K Funnel Revenue Calculator | Priddy Impact Group</title>
-<meta name="description" content="Model how a main product, order bump, upsell, downsell and one-time offer work together to raise your average order value and monthly profit.">
+<meta name="app-version" content="0.3.3">
+<title>Authority Funnel Revenue Calculator | Priddy Impact Group</title>
+<meta name="description" content="Plan the five evergreen digital products in your authority funnel and see how they work together on order value, revenue and profit.">
 <link rel="icon" href="assets/pig-monogram-gold.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -286,6 +286,10 @@
     transition: background-color .2s;
   }
   .chip:hover { background: color-mix(in oklab, var(--gold) 35%, var(--white)); }
+  .yearly { margin-top: 10px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px dashed color-mix(in oklab, var(--gold) 70%, var(--white)); }
+  .yearly label { display: block; font-size: 0.8rem; font-weight: 500; margin-bottom: 6px; }
+  .yearly small { display: block; margin-top: 5px; font-size: 0.74rem; color: var(--slate); }
+  .small-box input { padding: 8px 12px; font-size: 0.92rem; }
   .goals { container-type: inline-size; display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 8px; }
   .goals-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
   @container (min-width: 820px) { .goals-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .goal { grid-template-columns: 1fr; } }
@@ -419,8 +423,8 @@
     <img src="assets/pig-monogram-gold.png" alt="Priddy Impact Group">
     <div class="rule" aria-hidden="true"></div>
     <div>
-      <h1><span class="k">$100K</span> Funnel Revenue Calculator</h1>
-      <p>Model how your main product, order bump, upsell, downsell and one-time offer work together. Change any number and watch your order value and profit respond.</p>
+      <h1>Authority Funnel Revenue Calculator</h1>
+      <p>Plan the five evergreen digital products that build your authority and lead clients to your bigger work. Change any number and see how your order value and profit respond.</p>
     </div>
   </div>
 </header>
@@ -573,7 +577,9 @@
         <label for="f-revenueGoal">Revenue goal <span class="sub">/ month, after refunds</span></label>
         <div class="box"><span>$</span><input id="f-revenueGoal" data-field="revenueGoal" inputmode="decimal"></div>
         <div class="err" data-err="revenueGoal"></div>
-        <button type="button" class="chip" id="chip100k">Use $100K a year ($8,334 / month)</button>
+        <div class="yearly"><label for="yearlyGoal">Have a yearly goal instead?</label>
+          <div class="box small-box"><span>$</span><input id="yearlyGoal" inputmode="decimal" placeholder="Yearly amount" aria-describedby="yearlyHint"></div>
+          <small id="yearlyHint">We'll divide it by 12 and fill in the monthly goal.</small></div>
       </div>
       <div class="field">
         <label for="f-profitGoal">Profit goal <span class="sub">/ month</span></label>
@@ -673,8 +679,8 @@
 import {
   calculate, compareScenarios, defaultScenarios, DEFAULT_INPUTS, DEFINITIONS, OFFER_KEYS, OFFER_LABELS,
   formatMoney, formatCount,
-} from './src/calc.js?v=0.3.2';
-import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.3.2';
+} from './src/calc.js?v=0.3.3';
+import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.3.3';
 
 const $ = (id) => document.getElementById(id);
 const CURRENT_KEY = 'pig-dp002-current';
@@ -900,7 +906,7 @@ function renderAovGoal(g, maxValue) {
   const set = (k, v) => { root.querySelector(`[data-k="${k}"]`).textContent = v; };
   const fill = root.querySelector('.fill'), mark = root.querySelector('.mark');
   set('away', ''); set('note', '');
-  if (!g) { root.dataset.state = 'empty'; set('goal', ''); set('current', '—'); set('gap', '—'); fill.style.width = '0'; mark.hidden = true; set('note', 'Enter a target above. Many funnel plans explore $300 to $500.'); return; }
+  if (!g) { root.dataset.state = 'empty'; set('goal', ''); set('current', '—'); set('gap', '—'); fill.style.width = '0'; mark.hidden = true; set('note', 'Enter a target order value above to see how far your funnel is from it.'); return; }
   mark.hidden = false;
   set('goal', money0(g.goal));
   set('current', money(g.current));
@@ -1046,7 +1052,7 @@ function buildReport() {
   const g = r.goals;
   const goalRow = (label, goal) => !goal ? '' : `<tr><td>${label}</td><td>${money0(goal.goal)}</td><td>${goal.reachable ? whole(goal.requiredBuyers) : 'Not reachable'}</td><td>${goal.reachable ? whole(goal.requiredVisitors) : '—'}</td></tr>`;
   $('report').innerHTML = `
-    <header><img src="assets/pig-logo-full.png" alt=""><div><h1>$100K Funnel Revenue Calculator: ${esc(title)}</h1>
+    <header><img src="assets/pig-logo-full.png" alt=""><div><h1>Authority Funnel Revenue Calculator: ${esc(title)}</h1>
       <div style="color:var(--slate);font-size:9pt">Prepared ${new Date().toLocaleDateString('en-US', { dateStyle: 'long' })}</div></div></header>
     <div class="kp">
       <div><small>Average order value</small><b>${money(x.aov)}</b></div>
@@ -1084,7 +1090,7 @@ function buildReport() {
         .map(([label, f]) => `<tr><td>${label}</td>${Object.keys(SCEN).map((k) => `<td>${s[k].ok ? f(s[k]) : '—'}</td>`).join('')}</tr>`).join('')}
     </tbody></table>
     <p class="fine">${esc(DEFINITIONS.disclaimer)} Ad spend is treated as a fixed monthly budget in goal calculations.<br>
-      Revenue Calculator v${APP_VERSION}, calculation engine v${ENGINE_VERSION}. © Priddy Impact Group, LLC.</p>`;
+      Authority Funnel Revenue Calculator v${APP_VERSION}, calculation engine v${ENGINE_VERSION}. © Priddy Impact Group, LLC.</p>`;
   return true;
 }
 $('reportBtn').addEventListener('click', () => {
@@ -1121,7 +1127,12 @@ $('resetScen').addEventListener('click', () => {
   render();
 });
 $('goName').addEventListener('click', () => { const f = $('f-productName'); f.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' }); f.focus({ preventScroll: true }); });
-$('chip100k').addEventListener('click', () => { $('f-revenueGoal').value = 8334; render(); });
+$('yearlyGoal').addEventListener('input', (e) => {
+  const n = Number(e.target.value.replace(/[$,\s]/g, ''));
+  if (e.target.value.trim() === '' || !Number.isFinite(n) || n < 0) return;
+  $('f-revenueGoal').value = Math.ceil((n / 12) * 100) / 100;
+  render();
+});
 
 /* ---------- GoHighLevel embed: report height ---------- */
 if (document.documentElement.classList.contains('embed') && window.parent !== window) {
@@ -1138,7 +1149,7 @@ if (current && current.schema !== DATA_SCHEMA) current = null;
 applyValues(current?.values);
 scenarios = current?.scenarios || null;
 $('disclaimer').textContent = DEFINITIONS.disclaimer;
-$('versionLine').textContent = `Funnel Revenue Calculator v${APP_VERSION}, calculation engine v${ENGINE_VERSION}`;
+$('versionLine').textContent = `Authority Funnel Revenue Calculator v${APP_VERSION}, calculation engine v${ENGINE_VERSION}`;
 syncSliders();
 renderSaved();
 render();

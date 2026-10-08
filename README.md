@@ -1,8 +1,8 @@
-# DP-002 — $100K Funnel Revenue Calculator
+# DP-002 — Authority Funnel Revenue Calculator
 
-**Version 0.3.2** (calculation engine 2.0.0, data schema 2). See `CHANGELOG.md`.
+**Version 0.3.3** (calculation engine 2.0.0, data schema 2). See `CHANGELOG.md`.
 
-Models how a main product, order bump, upsell, downsell and one-time offer work together to raise average order value (AOV), revenue and profit. Dependency-free; runs in the browser and on the server.
+Helps coaches, consultants and service providers plan an authority funnel: five evergreen digital products (main product, order bump, upsell, downsell, one-time offer) that showcase their expertise and lead buyers toward bigger one-on-one work. Models how the five work together on average order value (AOV), revenue and profit. Dependency-free; runs in the browser and on the server.
 
 ```bash
 npm test        # 32 tests, Node 18+
@@ -69,6 +69,8 @@ Added for the funnel model in v0.3.0 (assumptions, open to change):
 
 **Make it fluid and motivating.** Recalculate on every keystroke, slider move or toggle. `additionalVisitors` drives the "You're X visitors away" line; `requiredConversionRate` and `requiredBuyersAtTargetAov` show the other two levers.
 
+**Income-claim wording (FTC).** The product name, page and report avoid dollar figures and earnings language. Do not use "$100K", "passive income", "make money while you sleep", "guaranteed" or similar in the product name, page copy, report or sales page. Prefer "evergreen", "low-maintenance", "plan", "model" and "at these numbers". Example figures are always labeled as examples the customer replaces.
+
 **Keep the honesty guardrails visible.** Show `DEFINITIONS.disclaimer` near the results, not hidden in a footer. Use wording like "at these numbers" or "your plan shows", and never "you will earn." Label every default as illustrative and editable. Because this is a paid product, the in-app copy and the sales page both need to avoid sounding like income promises.
 
 **Definitions.** `DEFINITIONS` provides plain-language text for each output, for tooltips and the exported report (RC-10).
@@ -93,7 +95,7 @@ Purchase happens in GoHighLevel. The planned access flow:
 
 ```html
 <iframe id="pig-calc" src="https://YOUR-VERCEL-DOMAIN/?embed=1"
-        style="width:100%;border:0;min-height:1400px" title="Revenue Calculator"></iframe>
+        style="width:100%;border:0;min-height:1400px" title="Authority Funnel Revenue Calculator"></iframe>
 <script>
   window.addEventListener('message', (e) => {
     if (e.data && e.data.type === 'pig-revenue-calculator:height') {
