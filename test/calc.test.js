@@ -178,3 +178,8 @@ test('conversion lever: rate needed at current traffic', () => {
   const none = calculate({ ...base, visitors: 0 });
   assert.equal(none.goals.revenue.requiredConversionRate, null);
 });
+
+test('results carry the engine version that produced them', async () => {
+  const { ENGINE_VERSION } = await import('../src/version.js');
+  assert.equal(calculate(base).engineVersion, ENGINE_VERSION);
+});

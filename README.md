@@ -1,9 +1,11 @@
-# Digital Product Revenue Calculator — Calculation Engine
+# Digital Product Revenue Calculator
 
-The tested math for Project 2. It has no dependencies, runs in the browser and on the server, and drops straight into a React/Vite app.
+**Version 0.2.0** (calculation engine 1.1.0). See `CHANGELOG.md`.
+
+The tested math and branded calculator page for Project 2. It has no dependencies, runs in the browser and on the server, and drops straight into a React/Vite app.
 
 ```bash
-npm test        # 17 tests, Node 18+
+npm test        # 19 tests, Node 18+
 ```
 
 ```js
@@ -49,12 +51,40 @@ The engine never returns `Infinity` or `NaN`. When a value can't be determined, 
 
 ## Prototype page and deploying
 
-`index.html` is a working prototype of the calculator screen. It imports `src/calc.js` directly, so there is no build step.
+`index.html` is the branded calculator screen. It imports `src/calc.js` directly, so there is no build step.
 
 On Vercel: Framework Preset **Other**, Build Command **empty**, Output Directory **empty**. If these files sit inside a subfolder of the repo, set Root Directory to that folder.
 
 The prototype remembers the last numbers in the visitor's own browser. Real accounts and server-side saving come later.
 
+## Selling through GoHighLevel
+
+Purchase happens in GoHighLevel. The planned access flow:
+
+1. Customer buys through a GHL order form.
+2. GHL grants access to a membership product (or fires a workflow webhook).
+3. The calculator is shown inside that membership area as an embedded page:
+
+```html
+<iframe id="pig-calc" src="https://YOUR-VERCEL-DOMAIN/?embed=1"
+        style="width:100%;border:0;min-height:1400px" title="Revenue Calculator"></iframe>
+<script>
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'pig-revenue-calculator:height') {
+      document.getElementById('pig-calc').style.height = e.data.height + 'px';
+    }
+  });
+</script>
+```
+
+`vercel.json` only allows the page to be framed by GoHighLevel domains and faststartpro.com. If the membership area runs on a different custom domain, add it to `frame-ancestors` there.
+
+**Important:** framing limits *where* the page can be shown, but anyone who has the direct Vercel link can still open it. Real paid-only access needs the account step below (GHL webhook → account → login). Until then, treat the link as unlisted, not protected.
+
+## Versioning rules
+
+Bump `APP_VERSION` on every build. Bump `ENGINE_VERSION` when any formula changes, and `DATA_SCHEMA` when the saved format changes. Update `package.json`, the `app-version` meta tag and the `?v=` on the two imports in `index.html` to match, and add a `CHANGELOG.md` entry.
+
 ## Not yet built
 
-Account-based saving (RC-08), the report export (RC-09), and multi-currency formatting beyond the `currency` field.
+Paid-only access and account-based saving (RC-08), the report export (RC-09), and multi-currency formatting beyond the `currency` field.

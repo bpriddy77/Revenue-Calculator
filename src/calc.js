@@ -16,6 +16,9 @@
  * Locked model decisions (2026-10-08) — see README.md "Decision log".
  */
 
+import { ENGINE_VERSION } from './version.js';
+export { ENGINE_VERSION };
+
 /** Illustrative defaults only. Never present these as industry benchmarks. */
 export const DEFAULT_INPUTS = Object.freeze({
   productName: '',
@@ -250,6 +253,7 @@ export function calculate(raw = {}) {
 
   return {
     ok: true,
+    engineVersion: ENGINE_VERSION,
     inputs: i,
     results: {
       orders,

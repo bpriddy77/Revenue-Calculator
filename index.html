@@ -3,180 +3,318 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Revenue Calculator</title>
+<meta name="app-version" content="0.2.0">
+<title>Revenue Calculator | Priddy Impact Group</title>
 <meta name="description" content="Plan the revenue and profit of your digital product. Change any number and see your month take shape.">
+<link rel="icon" href="assets/pig-monogram-gold.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Brand tokens (sampled from the Priddy Impact Group logo files) */
+  @property --p { syntax: '<number>'; inherits: false; initial-value: 0; }
   :root {
-    --paper: #F3F6FA;
-    --sheet: #FFFFFF;
-    --ink: #14213D;
-    --ink-soft: #4A5875;
-    --grid: #D6E0EC;
-    --gain: #0F7B5F;
+    --teal: #004053;
+    --teal-deep: #002B38;
+    --slate: #687083;
+    --slate-line: #D1D5DC;
+    --gold: #BEAE88;
+    --gold-light: #E9DFC4;
+    --gold-dark: #8E7F5A;
+    --white: #FFFFFF;
+    --mist: #F4F6F8;
+    --gain: #1D7458;
     --loss: #B3261E;
-    --marker: #FFD84D;
-    --focus: #2F5BD3;
-    --display: 'Bricolage Grotesque', system-ui, sans-serif;
-    --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+    --loss-soft: #F4A79E;
+    --teal-tint: color-mix(in oklab, var(--teal) 6%, var(--white));
+    --gold-tint: color-mix(in oklab, var(--gold) 18%, var(--white));
+    --radius-lg: 18px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 2px rgb(0 43 56 / 6%), 0 12px 32px -12px rgb(0 43 56 / 18%);
+    --font: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
-    background-color: var(--paper);
-    background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 28px 28px;
-    color: var(--ink);
-    font: 16px/1.5 var(--body);
+    font: 400 15px/1.6 var(--font);
+    color: var(--teal);
+    background:
+      radial-gradient(1200px 500px at 85% -10%, color-mix(in oklab, var(--gold) 16%, transparent), transparent 70%),
+      radial-gradient(900px 600px at -10% 40%, color-mix(in oklab, var(--slate) 10%, transparent), transparent 70%),
+      var(--mist);
+    min-height: 100vh;
   }
-  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--gold-dark); outline-offset: 3px; }
+  h1, h2, h3 { text-wrap: balance; }
+  .tnum { font-variant-numeric: tabular-nums; }
 
-  .page { max-width: 1180px; margin: 0 auto; padding: 32px 16px 120px; }
-
-  header.intro { max-width: 46rem; margin-bottom: 28px; }
-  h1 {
-    font: 800 clamp(2.2rem, 6vw, 3.6rem)/1.02 var(--display);
-    letter-spacing: -0.02em;
-    margin: 0 0 12px;
+  /* Header band */
+  .masthead {
+    background:
+      linear-gradient(135deg, var(--teal) 0%, var(--teal-deep) 100%);
+    color: var(--white);
+    position: relative;
+    overflow: hidden;
   }
-  .intro p { margin: 0; font-size: 1.125rem; color: var(--ink-soft); max-width: 38rem; }
+  .masthead::after { /* faint gold sweep echoing the monogram's curve */
+    content: ''; position: absolute; inset: auto -10% -60% 40%; height: 140%;
+    background: radial-gradient(closest-side, color-mix(in oklab, var(--gold) 22%, transparent), transparent);
+    pointer-events: none;
+  }
+  .masthead-inner {
+    max-width: 1200px; margin: 0 auto; padding: 36px 16px 92px;
+    display: flex; align-items: center; gap: 22px; position: relative; z-index: 1;
+  }
+  .masthead img { width: 54px; height: auto; flex: none; }
+  .masthead .rule { width: 1px; align-self: stretch; background: linear-gradient(transparent, var(--gold), transparent); }
+  .masthead h1 { margin: 0; font-weight: 600; font-size: clamp(1.7rem, 4.5vw, 2.6rem); line-height: 1.1; letter-spacing: -0.01em; }
+  .masthead p { margin: 6px 0 0; color: color-mix(in oklab, var(--white) 78%, var(--teal)); font-weight: 300; max-width: 36rem; }
 
-  .layout { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
-  @media (min-width: 960px) {
+  .page { max-width: 1200px; margin: -64px auto 0; padding: 0 16px 120px; position: relative; z-index: 2; }
+  .layout { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) {
     .layout { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; }
-    .results { position: sticky; top: 16px; }
+    .results { position: sticky; top: 18px; }
   }
 
-  .sheet {
-    background: var(--sheet);
-    border: 1.5px solid var(--ink);
-    border-radius: 6px;
-    padding: 22px 20px;
+  .card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    border: 1px solid color-mix(in oklab, var(--slate-line) 70%, transparent);
   }
-  .sheet + .sheet { margin-top: 20px; }
+  .pad { padding: 26px 24px; }
+  .card + .card { margin-top: 22px; }
+  h2 { font-size: 1.2rem; font-weight: 600; margin: 0 0 2px; }
+  .hint { margin: 0 0 18px; color: var(--slate); font-size: 0.92rem; }
 
-  h2 { font: 700 1.35rem/1.2 var(--display); margin: 0 0 4px; }
-  .hint { margin: 0 0 16px; color: var(--ink-soft); font-size: 0.95rem; }
+  /* Form */
+  fieldset { border: 0; margin: 0; padding: 18px 0 4px; border-top: 1px solid var(--slate-line); }
+  fieldset:first-of-type { border-top: 0; padding-top: 4px; }
+  legend { float: left; width: 100%; font-weight: 600; font-size: 0.98rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+  legend::before { content: ''; width: 18px; height: 2px; background: var(--gold); border-radius: 2px; }
+  fieldset > *:not(legend) { clear: both; }
 
-  fieldset { border: 0; padding: 0; margin: 0 0 22px; }
-  fieldset:last-child { margin-bottom: 0; }
-  legend { font: 700 1.05rem/1.3 var(--display); padding: 0; margin-bottom: 10px; }
-
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
-  .field .sub { font-weight: 400; color: var(--ink-soft); }
-  .row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: end; }
-  .row2 > * { min-width: 0; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-weight: 500; font-size: 0.88rem; margin-bottom: 6px; }
+  .field label .sub { font-weight: 300; color: var(--slate); }
+  .row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: end; }
 
   .box {
     display: flex; align-items: center;
-    border: 1.5px solid var(--ink-soft); border-radius: 4px; background: var(--sheet);
+    background: var(--teal-tint);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-sm);
+    transition: border-color .2s, background-color .2s, box-shadow .2s;
   }
-  .box:focus-within { border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus); }
-  .box span { padding: 0 2px 0 10px; color: var(--ink-soft); }
-  .box span.after { padding: 0 10px 0 2px; }
+  .box:hover { border-color: var(--slate-line); }
+  .box:focus-within { background: var(--white); border-color: var(--gold); box-shadow: 0 0 0 4px color-mix(in oklab, var(--gold) 25%, transparent); }
+  .box span { padding-left: 14px; color: var(--slate); font-weight: 500; }
+  .box span.after { padding: 0 14px 0 0; }
   .box input {
-    flex: 1; width: 100%; min-width: 0; border: 0; background: transparent; color: var(--ink);
-    font: 400 1rem/1.2 var(--body); padding: 10px; font-variant-numeric: tabular-nums;
+    flex: 1; width: 100%; min-width: 0; border: 0; background: transparent; color: var(--teal);
+    font: 500 1rem/1.2 var(--font); padding: 12px 14px; font-variant-numeric: tabular-nums;
   }
+  .box input::placeholder { color: color-mix(in oklab, var(--slate) 70%, var(--white)); font-weight: 400; }
   .box input:focus { outline: none; }
-  .box.invalid { border-color: var(--loss); }
-  .err { color: var(--loss); font-size: 0.875rem; margin-top: 4px; }
+  .field:has(.err:not(:empty)) .box { border-color: var(--loss); background: color-mix(in oklab, var(--loss) 5%, var(--white)); }
+  .err { color: var(--loss); font-size: 0.82rem; margin-top: 5px; }
   .err:empty { display: none; }
 
-  input[type=range] { width: 100%; margin: 10px 0 0; accent-color: var(--ink); }
-
-  details.more { border-top: 1.5px dashed var(--grid); padding-top: 12px; }
-  details.more summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
-  details.more[open] summary { margin-bottom: 12px; }
-
-  /* Results */
-  .headline { display: grid; gap: 6px; padding-bottom: 18px; border-bottom: 1.5px solid var(--ink); margin-bottom: 18px; }
-  .headline .label { font-size: 1rem; color: var(--ink-soft); }
-  .big {
-    font: 800 clamp(2.8rem, 9vw, 4.6rem)/1 var(--display);
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
-    justify-self: start;
-    padding: 0 6px;
-    background: linear-gradient(transparent 52%, var(--marker) 52%, var(--marker) 92%, transparent 92%);
+  /* Gold-filled sliders */
+  input[type=range] {
+    --fill: 0%;
+    -webkit-appearance: none; appearance: none; width: 100%; height: 22px; margin: 10px 0 0; background: transparent; cursor: pointer;
   }
-  .big.loss { color: var(--loss); background: linear-gradient(transparent 52%, #FBD3CF 52%, #FBD3CF 92%, transparent 92%); }
-  .headline .because { margin: 4px 0 0; }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 6px; border-radius: 6px;
+    background: linear-gradient(to right, var(--gold) var(--fill), var(--slate-line) var(--fill));
+  }
+  input[type=range]::-moz-range-track { height: 6px; border-radius: 6px; background: var(--slate-line); }
+  input[type=range]::-moz-range-progress { height: 6px; border-radius: 6px; background: var(--gold); }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%;
+    background: var(--white); border: 2px solid var(--teal); box-shadow: 0 2px 8px rgb(0 43 56 / 25%);
+    transition: transform .15s;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%; background: var(--white); border: 2px solid var(--teal);
+    box-shadow: 0 2px 8px rgb(0 43 56 / 25%);
+  }
+  input[type=range]:active::-webkit-slider-thumb { transform: scale(1.15); }
 
+  details.more { margin-top: 4px; border-radius: var(--radius-sm); background: var(--teal-tint); padding: 0 14px; }
+  details.more summary {
+    cursor: pointer; font-weight: 500; font-size: 0.9rem; padding: 12px 0; list-style: none;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  details.more summary::-webkit-details-marker { display: none; }
+  details.more summary::after { content: '+'; font-size: 1.3rem; font-weight: 300; color: var(--gold-dark); transition: transform .2s; }
+  details.more[open] summary::after { transform: rotate(45deg); }
+  details.more[open] { padding-bottom: 4px; }
+  details.more .box { background: var(--white); }
+
+  /* Results: hero */
+  .hero {
+    background:
+      radial-gradient(500px 220px at 100% 0%, color-mix(in oklab, var(--gold) 20%, transparent), transparent 70%),
+      linear-gradient(150deg, var(--teal) 0%, var(--teal-deep) 100%);
+    color: var(--white);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 28px 24px 26px;
+    position: relative;
+  }
+  .hero .label { font-weight: 300; color: color-mix(in oklab, var(--white) 80%, var(--teal)); font-size: 0.95rem; }
+  .profit {
+    display: inline-block;
+    font-weight: 700; font-size: clamp(2.8rem, 9vw, 4.4rem); line-height: 1.05; letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(110deg, var(--gold-dark) 0%, var(--gold-light) 30%, var(--gold) 50%, #F6F0DF 65%, var(--gold-dark) 100%);
+    background-size: 220% 100%; background-position: 100% 0;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin: 4px 0 6px;
+  }
+  .profit.shine { animation: shine 1.1s ease-out; }
+  @keyframes shine { from { background-position: 0 0; } to { background-position: 100% 0; } }
+  .profit.loss { background: none; color: var(--loss-soft); }
+  .hero .because { margin: 0; font-weight: 300; color: color-mix(in oklab, var(--white) 85%, var(--teal)); max-width: 34rem; }
+  .hero .warn { margin: 12px 0 0; padding: 10px 14px; border-radius: var(--radius-sm); background: rgb(255 255 255 / 8%); border-left: 3px solid var(--loss-soft); font-size: 0.9rem; }
+  .hero .warn[hidden] { display: none; }
+
+  .ledger-wrap { padding: 8px 24px 24px; }
   .ledger { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  .ledger td { padding: 7px 0; border-bottom: 1px solid var(--grid); }
-  .ledger td:last-child { text-align: right; white-space: nowrap; }
-  .ledger tr.minus td:first-child::before { content: '− '; color: var(--ink-soft); }
-  .ledger tr.total td { border-top: 2px solid var(--ink); border-bottom: 0; font-weight: 700; padding-top: 10px; }
-  .ledger tr.sub td { color: var(--ink-soft); }
+  .ledger td { padding: 9px 0; border-bottom: 1px solid var(--slate-line); }
+  .ledger td:last-child { text-align: right; white-space: nowrap; font-weight: 500; }
+  .ledger tr.minus td:first-child { color: var(--slate); }
+  .ledger tr.minus td:last-child::before { content: '−\2009'; color: var(--slate); font-weight: 400; }
+  .ledger tr.sub td { background: var(--teal-tint); font-weight: 500; }
+  .ledger tr.sub td:first-child { padding-left: 10px; border-radius: 8px 0 0 8px; }
+  .ledger tr.sub td:last-child { padding-right: 10px; border-radius: 0 8px 8px 0; }
+  .ledger tr.total td { border-bottom: 0; border-top: 2px solid var(--teal); font-weight: 600; font-size: 1.05rem; padding-top: 12px; }
   .pos { color: var(--gain); }
   .neg { color: var(--loss); }
 
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-top: 20px; }
-  .stat dt { font-size: 0.9rem; color: var(--ink-soft); }
-  .stat dd { margin: 2px 0 0; font: 700 1.4rem/1.2 var(--display); font-variant-numeric: tabular-nums; }
-  .stat .why { font: 400 0.85rem/1.4 var(--body); color: var(--ink-soft); margin-top: 4px; }
+  /* Stats adapt to the width of their own card */
+  .stats-wrap { container-type: inline-size; padding: 0 24px 24px; }
+  .stats { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 0; }
+  @container (min-width: 480px) { .stats { grid-template-columns: repeat(3, 1fr); } }
+  .stat { background: var(--gold-tint); border-radius: var(--radius-sm); padding: 14px 16px; }
+  .stat dt { font-size: 0.82rem; color: var(--slate); font-weight: 500; }
+  .stat dd { margin: 2px 0 0; font-weight: 600; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+  .stat .why { font-size: 0.78rem; line-height: 1.45; color: var(--slate); margin-top: 6px; }
 
-  .goal { padding: 16px 0; border-bottom: 1px solid var(--grid); }
-  .goal:last-child { border-bottom: 0; padding-bottom: 0; }
-  .goal h3 { font: 700 1.1rem/1.3 var(--display); margin: 0 0 8px; }
-  .goal .needs { display: flex; flex-wrap: wrap; gap: 6px 22px; font-variant-numeric: tabular-nums; }
-  .goal .needs b { font: 700 1.5rem/1.2 var(--display); display: block; }
-  .track { height: 12px; border: 1.5px solid var(--ink); border-radius: 999px; margin: 14px 0 6px; overflow: hidden; background: var(--sheet); }
-  .fill { height: 100%; background: var(--ink); width: 0; transition: width 0.35s ease; }
-  .fill.done { background: var(--gain); }
-  .away { font-weight: 700; margin: 0; }
-  .lever { margin: 6px 0 0; color: var(--ink-soft); }
-  .note { margin: 8px 0 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .disclaimer {
+    margin: 0 24px 24px; font-size: 0.82rem; color: var(--slate);
+    padding: 12px 14px; border-radius: var(--radius-sm);
+    border: 1px solid color-mix(in oklab, var(--gold) 55%, transparent);
+    background: color-mix(in oklab, var(--gold) 7%, var(--white));
+  }
 
-  .scen-wrap { overflow-x: auto; }
-  table.scen { width: 100%; min-width: 480px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  .scen th, .scen td { padding: 8px 6px; text-align: right; border-bottom: 1px solid var(--grid); }
-  .scen th:first-child, .scen td:first-child { text-align: left; }
-  .scen thead th { font: 700 1rem/1.2 var(--display); border-bottom: 2px solid var(--ink); }
+  /* Goals with animated progress rings */
+  .goals-wrap { container-type: inline-size; }
+  .goal { display: grid; grid-template-columns: 96px 1fr; gap: 18px; align-items: start; padding: 18px 0; border-top: 1px solid var(--slate-line); }
+  .goal:first-of-type { border-top: 0; padding-top: 4px; }
+  @container (max-width: 380px) { .goal { grid-template-columns: 76px 1fr; gap: 14px; } .ring { width: 76px; } .ring b { font-size: 1rem; } }
+  @container (max-width: 260px) { .goal { grid-template-columns: 1fr; } }
+  .ring {
+    --p: 0;
+    width: 96px; aspect-ratio: 1; border-radius: 50%;
+    background: conic-gradient(from -90deg, var(--gold) calc(var(--p) * 1%), var(--teal-tint) 0);
+    display: grid; place-items: center; position: relative;
+    transition: --p .8s cubic-bezier(.2, .8, .2, 1);
+  }
+  .ring::before { content: ''; position: absolute; inset: 9px; border-radius: 50%; background: var(--white); }
+  .ring > span { position: relative; text-align: center; line-height: 1.1; }
+  .ring b { display: block; font-weight: 600; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .ring small { font-size: 0.68rem; color: var(--slate); }
+  .goal[data-state="done"] .ring { background: conic-gradient(var(--gain) 0 100%); }
+  .goal[data-state="empty"] .ring, .goal[data-state="blocked"] .ring { opacity: .45; }
+  .goal h3 { margin: 0 0 6px; font-size: 1rem; font-weight: 600; }
+  .goal h3 .amt { color: var(--gold-dark); }
+  .needs { display: flex; flex-wrap: wrap; gap: 4px 26px; margin: 0; }
+  .needs span { color: var(--slate); font-size: 0.85rem; }
+  .needs b { display: block; color: var(--teal); font-size: 1.45rem; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .away { margin: 10px 0 0; font-weight: 600; }
+  .goal[data-state="done"] .away { color: var(--gain); }
+  .lever { margin: 4px 0 0; color: var(--slate); font-size: 0.9rem; }
+  .note { margin: 8px 0 0; color: var(--slate); font-size: 0.82rem; }
+  .goal p:empty { display: none; }
+  .goal[data-state="empty"] .needs, .goal[data-state="blocked"] .needs { display: none; }
+
+  /* Scenarios */
+  .scen-wrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+  table.scen { width: 100%; min-width: 500px; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+  .scen th, .scen td { padding: 9px 8px; text-align: right; border-bottom: 1px solid var(--slate-line); }
+  .scen th:first-child, .scen td:first-child { text-align: left; color: var(--slate); font-weight: 500; }
+  .scen thead th { font-weight: 600; font-size: 0.95rem; color: var(--teal); border-bottom: 2px solid var(--teal); }
+  .scen thead th.mid { color: var(--gold-dark); }
+  .scen .mid { background: color-mix(in oklab, var(--gold) 9%, var(--white)); }
   .scen input {
-    width: 100%; max-width: 110px; text-align: right; font: 400 0.95rem var(--body); color: var(--ink);
-    border: 1.5px solid var(--ink-soft); border-radius: 4px; padding: 6px; background: var(--sheet);
+    width: 100%; max-width: 110px; text-align: right; font: 500 0.95rem var(--font); color: var(--teal);
+    border: 1.5px solid transparent; border-radius: 8px; padding: 7px 9px; background: var(--teal-tint);
   }
-  .scen tr.out td { font-weight: 700; }
-  button.plain {
-    margin-top: 12px; font: 700 0.95rem var(--body); color: var(--ink); background: var(--sheet);
-    border: 1.5px solid var(--ink); border-radius: 4px; padding: 8px 14px; cursor: pointer;
+  .scen input:focus { outline: none; border-color: var(--gold); background: var(--white); }
+  .scen tr.out td { font-weight: 600; color: var(--teal); }
+  .btn {
+    margin-top: 16px; font: 500 0.9rem var(--font); color: var(--teal); cursor: pointer;
+    background: var(--white); border: 1.5px solid var(--teal); border-radius: 999px; padding: 9px 18px;
+    transition: background-color .2s, color .2s;
   }
-  button.plain:hover { background: var(--paper); }
+  .btn:hover { background: var(--teal); color: var(--white); }
 
-  .disclaimer { margin-top: 16px; font-size: 0.9rem; color: var(--ink-soft); border-left: 4px solid var(--marker); padding-left: 12px; }
-  .blocked { padding: 20px 0; font-weight: 700; color: var(--loss); }
+  .blocked-msg { margin: 0; font-weight: 500; color: var(--loss-soft); }
 
-  /* Mobile: keep the profit in view while typing */
+  /* Footer */
+  .foot { max-width: 1200px; margin: 0 auto; padding: 28px 16px 40px; display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; justify-content: space-between; color: var(--slate); font-size: 0.8rem; }
+  .foot img { height: 64px; width: auto; }
+
+  /* Mobile dock keeps the profit in view while typing */
   .dock {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
-    background: var(--ink); color: #fff; padding: 12px 16px;
-    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 10;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 12px 18px; border-radius: 16px; color: var(--white);
+    background: color-mix(in oklab, var(--teal-deep) 88%, transparent);
+    -webkit-backdrop-filter: blur(12px) saturate(140%); backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 10px 30px -10px rgb(0 43 56 / 50%);
   }
-  .dock b { font: 800 1.5rem/1 var(--display); font-variant-numeric: tabular-nums; }
-  .dock b.loss { color: #FFB4AB; }
-  @media (min-width: 960px) { .dock { display: none; } .page { padding-bottom: 48px; } }
+  .dock span { font-weight: 300; font-size: 0.9rem; }
+  .dock b { font-weight: 700; font-size: 1.35rem; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .dock b.loss { color: var(--loss-soft); }
+  @media (min-width: 980px) { .dock { display: none; } .page { padding-bottom: 24px; } }
 
-  @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+  /* Embedded in GoHighLevel (?embed=1): no masthead, transparent page */
+  .embed body { background: transparent; }
+  .embed .masthead { display: none; }
+  .embed .page { margin-top: 0; padding-top: 4px; }
+  .embed .foot img, .embed .dock { display: none; }
+  .embed .page { padding-bottom: 8px; }
+  .embed .foot { padding: 8px 16px 12px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
 </style>
+<script>
+  // Set embed mode before first paint to avoid a flash of the masthead.
+  if (new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embed');
+</script>
 </head>
 <body>
-<main class="page">
-  <header class="intro">
-    <h1>Revenue Calculator</h1>
-    <p>Change any number and watch your month take shape. Every figure here is a starting example, so replace it with your own.</p>
-  </header>
+<header class="masthead">
+  <div class="masthead-inner">
+    <img src="assets/pig-monogram-gold.png" alt="Priddy Impact Group">
+    <div class="rule" aria-hidden="true"></div>
+    <div>
+      <h1>Revenue Calculator</h1>
+      <p>Change any number and watch your month take shape. Every figure starts as an example, so replace it with your own.</p>
+    </div>
+  </div>
+</header>
 
+<main class="page">
   <div class="layout">
-    <!-- Inputs -->
-    <form class="sheet" id="inputs" novalidate>
+    <form class="card pad" id="inputs" novalidate>
       <h2>Your numbers</h2>
       <p class="hint">Everything updates as you type.</p>
 
@@ -268,72 +406,123 @@
       </fieldset>
     </form>
 
-    <!-- Results -->
     <div class="results">
-      <section class="sheet" aria-labelledby="month-h">
-        <h2 id="month-h" class="visually-hidden" style="position:absolute;left:-9999px">Your month</h2>
-        <div id="monthBody"></div>
+      <section class="card" aria-labelledby="profitLabel">
+        <div class="hero">
+          <div class="label" id="profitLabel">Estimated monthly profit at these numbers</div>
+          <div class="profit" id="profit" aria-live="polite">—</div>
+          <p class="because" id="because"></p>
+          <p class="warn" id="lossWarn" hidden>At these numbers the business loses money each month. Try a higher price, lower ad spend, or getting more visitors to buy.</p>
+        </div>
+        <div id="detail">
+          <div class="ledger-wrap">
+            <table class="ledger" aria-label="Where the money goes">
+              <tr><td>Sales before refunds</td><td id="l-gross"></td></tr>
+              <tr class="minus"><td>Refunds</td><td id="l-refunds"></td></tr>
+              <tr class="minus"><td>Payment fees</td><td id="l-fees"></td></tr>
+              <tr class="minus" id="row-other"><td>Other per-sale costs</td><td id="l-other"></td></tr>
+              <tr class="minus"><td>Ad spend</td><td id="l-ads"></td></tr>
+              <tr class="sub"><td>Left to cover fixed costs</td><td id="l-contrib"></td></tr>
+              <tr class="minus"><td>Fixed costs</td><td id="l-fixed"></td></tr>
+              <tr class="total"><td>Monthly profit</td><td id="l-profit"></td></tr>
+            </table>
+          </div>
+          <div class="stats-wrap">
+            <dl class="stats">
+              <div class="stat"><dt>Each visitor is worth</dt><dd id="s-rpv"></dd><div class="why" id="w-rpv"></div></div>
+              <div class="stat"><dt>Ad cost per customer</dt><dd id="s-cac"></dd><div class="why" id="w-cac"></div></div>
+              <div class="stat"><dt>Most you can pay per customer</dt><dd id="s-be"></dd><div class="why" id="w-be"></div></div>
+            </dl>
+          </div>
+        </div>
         <p class="disclaimer" id="disclaimer"></p>
       </section>
 
-      <section class="sheet" aria-labelledby="goals-h">
+      <section class="card pad goals-wrap" aria-labelledby="goals-h">
         <h2 id="goals-h">What it takes to hit your goals</h2>
         <p class="hint">Two ways to get there: more visitors, or more of them buying.</p>
-        <div id="goalsBody"></div>
+        <article class="goal" id="goal-revenue" data-state="empty">
+          <div class="ring" aria-hidden="true"><span><b data-k="pct">0%</b><small>of traffic</small></span></div>
+          <div>
+            <h3>Revenue goal <span class="amt" data-k="goal"></span></h3>
+            <p class="needs"><span><b data-k="orders">—</b>orders</span><span><b data-k="visitors">—</b>visitors</span></p>
+            <p class="away" data-k="away"></p>
+            <p class="lever" data-k="lever"></p>
+            <p class="note" data-k="note"></p>
+          </div>
+        </article>
+        <article class="goal" id="goal-profit" data-state="empty">
+          <div class="ring" aria-hidden="true"><span><b data-k="pct">0%</b><small>of traffic</small></span></div>
+          <div>
+            <h3>Profit goal <span class="amt" data-k="goal"></span></h3>
+            <p class="needs"><span><b data-k="orders">—</b>orders</span><span><b data-k="visitors">—</b>visitors</span></p>
+            <p class="away" data-k="away"></p>
+            <p class="lever" data-k="lever"></p>
+            <p class="note" data-k="note"></p>
+          </div>
+        </article>
       </section>
 
-      <section class="sheet" aria-labelledby="scen-h">
+      <section class="card pad" aria-labelledby="scen-h">
         <h2 id="scen-h">Compare three versions</h2>
-        <p class="hint">Edit the top rows. Your fees and costs from the left carry over.</p>
+        <p class="hint">Edit the top three rows. Your fees and costs carry over from the left.</p>
         <div class="scen-wrap"><table class="scen" id="scen"></table></div>
-        <button type="button" class="plain" id="resetScen">Reset to my current numbers</button>
+        <button type="button" class="btn" id="resetScen">Reset to my current numbers</button>
       </section>
     </div>
   </div>
 </main>
 
+<footer class="foot">
+  <img src="assets/pig-logo-full.png" alt="Priddy Impact Group">
+  <span id="versionLine"></span>
+</footer>
+
 <div class="dock" aria-hidden="true"><span>Monthly profit</span><b id="dockProfit">—</b></div>
 
 <script type="module">
-import {
-  calculate, compareScenarios, DEFAULT_INPUTS, DEFINITIONS, formatMoney, formatCount,
-} from './src/calc.js';
+import { calculate, compareScenarios, DEFAULT_INPUTS, DEFINITIONS, formatMoney, formatCount } from './src/calc.js?v=0.2.0';
+import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.2.0';
 
 const $ = (id) => document.getElementById(id);
 const form = $('inputs');
-const STORE_KEY = 'revenue-calculator-v1';
+const STORE_KEY = 'pig-revenue-calculator';
 const NAMES = ['productName', 'price', 'visitors', 'conversionRate', 'adSpend', 'fixedCosts',
   'refundRate', 'processingPct', 'processingFixed', 'otherCostPerOrder', 'revenueGoal', 'profitGoal'];
-const SCEN_NAMES = { conservative: 'Cautious', expected: 'Expected', optimistic: 'Optimistic' };
+const SCEN = { conservative: 'Cautious', expected: 'Expected', optimistic: 'Optimistic' };
+const SCEN_FIELDS = [['price', 'Price ($)'], ['visitors', 'Visitors'], ['conversionRate', 'Who buy (%)']];
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const pctToUI = (v) => +(v * 100).toFixed(4);
 const money = (v) => formatMoney(v, 'USD');
-const whole = (v) => (v === null ? '—' : new Intl.NumberFormat('en-US').format(v));
-const pct = (v) => (v === null ? '—' : `${+(v * 100).toFixed(2)}%`);
+const whole = (v) => (v === null || v === undefined ? '—' : new Intl.NumberFormat('en-US').format(v));
+const pct = (v) => `${+(v * 100).toFixed(2)}%`;
 
 let scenarios = null;
+let shownProfit = null;
 
+/* ---------- Saving (this browser only, versioned) ---------- */
 function load() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch { saved = null; }
+  if (saved && saved.schema !== DATA_SCHEMA) saved = null; // future: migrate older schemas here
   const values = saved?.values || {};
   for (const name of NAMES) {
     const el = form.elements[name];
     const fallback = DEFAULT_INPUTS[name];
-    let v = values[name] !== undefined ? values[name]
-      : (el.hasAttribute('data-pct') ? pctToUI(fallback) : fallback);
-    el.value = v ?? '';
+    el.value = values[name] !== undefined ? values[name] : (el.hasAttribute('data-pct') ? pctToUI(fallback) : (fallback ?? ''));
   }
   scenarios = saved?.scenarios || null;
-  syncSliders();
 }
-
 function save() {
   const values = {};
   for (const name of NAMES) values[name] = form.elements[name].value;
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ values, scenarios })); } catch { /* storage unavailable */ }
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ schema: DATA_SCHEMA, appVersion: APP_VERSION, engineVersion: ENGINE_VERSION, values, scenarios }));
+  } catch { /* storage unavailable: the calculator still works */ }
 }
 
+/* ---------- Inputs ---------- */
 function readInputs() {
   const out = {};
   for (const name of NAMES) {
@@ -342,190 +531,202 @@ function readInputs() {
     if (el.hasAttribute('data-pct') && raw.trim() !== '') {
       const n = Number(raw.replace(/[%\s]/g, ''));
       out[name] = Number.isFinite(n) ? n / 100 : raw;
-    } else {
-      out[name] = raw;
-    }
+    } else out[name] = raw;
   }
   return out;
 }
-
+function paintSlider(r) {
+  const min = +r.min, max = +r.max;
+  r.style.setProperty('--fill', `${Math.min(100, Math.max(0, ((+r.value - min) / (max - min)) * 100))}%`);
+}
 function syncSliders() {
-  for (const el of form.querySelectorAll('input[type=range]')) {
-    const box = $(el.dataset.pair);
-    const n = Number(box.value);
-    if (Number.isFinite(n)) el.value = n;
+  for (const r of form.querySelectorAll('input[type=range]')) {
+    const n = Number($(r.dataset.pair).value);
+    if (Number.isFinite(n)) r.value = n;
+    paintSlider(r);
   }
 }
+function showErrors(errors) {
+  for (const name of NAMES) { const e = $(`err-${name}`); if (e) e.textContent = errors[name] || ''; }
+}
 
+/* ---------- Results ---------- */
+function tweenProfit(to) {
+  const el = $('profit');
+  const from = shownProfit ?? to;
+  shownProfit = to;
+  if (reduceMotion || from === to) { el.textContent = money(to); return; }
+  const start = performance.now(), dur = 450;
+  const step = (t) => {
+    const k = Math.min(1, (t - start) / dur), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = money(from + (to - from) * e);
+    if (k < 1 && shownProfit === to) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function renderMonth(r) {
+  const x = r.results, loss = x.operatingProfit < 0;
+  const p = $('profit');
+  p.classList.toggle('loss', loss);
+  if (!loss && (shownProfit === null || Math.sign(shownProfit) !== Math.sign(x.operatingProfit))) {
+    p.classList.remove('shine'); void p.offsetWidth; p.classList.add('shine');
+  }
+  tweenProfit(x.operatingProfit);
+  const name = r.inputs.productName?.trim();
+  $('profitLabel').textContent = name ? `${name}: estimated monthly profit at these numbers` : 'Estimated monthly profit at these numbers';
+  $('because').textContent = `From about ${formatCount(x.orders)} orders and ${money(x.netRevenue)} in sales after refunds.`;
+  $('lossWarn').hidden = !loss;
+
+  $('l-gross').textContent = money(x.grossRevenue);
+  $('l-refunds').textContent = money(x.refundedRevenue);
+  $('l-fees').textContent = money(x.processingFees);
+  $('row-other').hidden = !(x.otherCosts > 0);
+  $('l-other').textContent = money(x.otherCosts);
+  $('l-ads').textContent = money(r.inputs.adSpend);
+  $('l-contrib').textContent = money(x.contributionProfit);
+  $('l-fixed').textContent = money(r.inputs.fixedCosts);
+  const lp = $('l-profit'); lp.textContent = money(x.operatingProfit); lp.className = loss ? 'neg' : 'pos';
+
+  $('s-rpv').textContent = x.revenuePerVisitor === null ? '—' : money(x.revenuePerVisitor);
+  $('w-rpv').textContent = r.notes.revenuePerVisitor || 'Sales after refunds, divided by visitors.';
+  $('s-cac').textContent = x.blendedCAC === null ? '—' : money(x.blendedCAC);
+  $('w-cac').textContent = r.notes.blendedCAC || DEFINITIONS.blendedCAC;
+  const be = $('s-be'); be.textContent = money(x.breakEvenCAC); be.className = x.breakEvenCAC <= 0 ? 'neg' : '';
+  $('w-be').textContent = r.notes.breakEvenCAC || DEFINITIONS.breakEvenCAC;
+
+  const dock = $('dockProfit'); dock.textContent = money(x.operatingProfit); dock.classList.toggle('loss', loss);
+}
+
+function renderGoal(id, g, visitors) {
+  const root = $(id);
+  const set = (k, v) => { root.querySelector(`[data-k="${k}"]`).textContent = v; };
+  const ring = root.querySelector('.ring');
+  set('away', ''); set('lever', ''); set('note', '');
+  if (!g) {
+    root.dataset.state = 'empty'; set('goal', ''); set('pct', '—');
+    ring.style.setProperty('--p', 0);
+    set('note', 'Add a goal on the left to see what it takes.');
+    return;
+  }
+  set('goal', `${money(g.goal)} a month`);
+  if (!g.reachable) {
+    root.dataset.state = 'blocked'; set('pct', '—'); ring.style.setProperty('--p', 0);
+    set('note', g.notes.requiredOrders); return;
+  }
+  set('orders', whole(g.requiredOrders));
+  set('visitors', whole(g.requiredVisitors));
+  const done = g.additionalVisitors === 0;
+  const progress = g.requiredVisitors === null ? 0 : (g.requiredVisitors === 0 ? 1 : Math.min(1, visitors / g.requiredVisitors));
+  root.dataset.state = done ? 'done' : 'ok';
+  ring.style.setProperty('--p', +(progress * 100).toFixed(1));
+  set('pct', g.requiredVisitors === null ? '—' : `${Math.round(progress * 100)}%`);
+
+  if (g.requiredVisitors === null) set('away', '');
+  else if (done) set('away', 'Your current traffic already reaches this goal.');
+  else set('away', `You're ${whole(g.additionalVisitors)} visitors away.`);
+
+  if (!done) {
+    if (g.requiredConversionRate !== null) set('lever', `Or keep today's traffic and get ${pct(g.requiredConversionRate)} of visitors to buy.`);
+    else if (g.notes.requiredConversionRate) set('lever', g.notes.requiredConversionRate);
+  }
+  set('note', [g.notes.requiredVisitors, g.notes.adSpend].filter(Boolean).join(' '));
+}
+
+/* ---------- Scenarios ---------- */
 function defaultScenarios(i) {
-  const base = { price: i.price, visitors: i.visitors };
-  const c = i.conversionRate;
+  const base = { price: i.price, visitors: i.visitors }, c = i.conversionRate;
   return {
     conservative: { ...base, conversionRate: +(c / 2).toFixed(4) },
     expected: { ...base, conversionRate: c },
     optimistic: { ...base, conversionRate: +(c * 2).toFixed(4) },
   };
 }
-
-function showErrors(errors) {
-  for (const name of NAMES) {
-    const err = $(`err-${name}`);
-    const box = form.elements[name].closest('.box');
-    if (err) err.textContent = errors[name] || '';
-    if (box) box.classList.toggle('invalid', Boolean(errors[name]));
+function buildScenarioTable() {
+  const keys = Object.keys(SCEN);
+  const cls = (k) => (k === 'expected' ? ' class="mid"' : '');
+  const inputRows = SCEN_FIELDS.map(([f, label]) =>
+    `<tr><td>${label}</td>${keys.map((k) => `<td${cls(k)}><input inputmode="decimal" aria-label="${SCEN[k]} ${label}" data-scen="${k}" data-field="${f}"></td>`).join('')}</tr>`).join('');
+  const outRows = [['orders', 'Orders'], ['net', 'Sales after refunds'], ['profit', 'Monthly profit']].map(([o, label]) =>
+    `<tr class="out"><td>${label}</td>${keys.map((k) => `<td${cls(k)} id="so-${k}-${o}">—</td>`).join('')}</tr>`).join('');
+  $('scen').innerHTML = `<thead><tr><th></th>${keys.map((k) => `<th${cls(k)}>${SCEN[k]}</th>`).join('')}</tr></thead><tbody>${inputRows}${outRows}</tbody>`;
+}
+function fillScenarioInputs() {
+  for (const el of $('scen').querySelectorAll('input')) {
+    const v = scenarios[el.dataset.scen][el.dataset.field];
+    el.value = el.dataset.field === 'conversionRate' ? pctToUI(v) : v;
+  }
+}
+function renderScenarioOutputs(raw) {
+  const s = compareScenarios(raw, scenarios);
+  for (const k of Object.keys(SCEN)) {
+    const r = s[k];
+    $(`so-${k}-orders`).textContent = r.ok ? formatCount(r.results.orders) : '—';
+    $(`so-${k}-net`).textContent = r.ok ? money(r.results.netRevenue) : '—';
+    const p = $(`so-${k}-profit`);
+    p.textContent = r.ok ? money(r.results.operatingProfit) : '—';
+    p.style.color = r.ok ? (r.results.operatingProfit < 0 ? 'var(--loss)' : 'var(--gain)') : '';
   }
 }
 
-function renderMonth(r) {
-  const x = r.results;
-  const loss = x.operatingProfit < 0;
-  const name = r.inputs.productName?.trim();
-  $('monthBody').innerHTML = `
-    <div class="headline" aria-live="polite">
-      <span class="label">${name ? `${escapeHtml(name)}: estimated` : 'Estimated'} monthly profit at these numbers</span>
-      <span class="big ${loss ? 'loss' : ''}">${money(x.operatingProfit)}</span>
-      <p class="because">From about ${formatCount(x.orders)} orders and ${money(x.netRevenue)} in sales after refunds.
-        ${loss ? 'At these numbers the business loses money each month. Try a higher price, lower ad spend, or more visitors who buy.' : ''}</p>
-    </div>
-    <table class="ledger" aria-label="Where the money goes">
-      <tr><td>Sales before refunds</td><td>${money(x.grossRevenue)}</td></tr>
-      <tr class="minus"><td>Refunds</td><td>${money(x.refundedRevenue)}</td></tr>
-      <tr class="minus"><td>Payment fees</td><td>${money(x.processingFees)}</td></tr>
-      ${x.otherCosts > 0 ? `<tr class="minus"><td>Other per-sale costs</td><td>${money(x.otherCosts)}</td></tr>` : ''}
-      <tr class="minus"><td>Ad spend</td><td>${money(r.inputs.adSpend)}</td></tr>
-      <tr class="sub"><td>Left to cover fixed costs</td><td>${money(x.contributionProfit)}</td></tr>
-      <tr class="minus"><td>Fixed costs</td><td>${money(r.inputs.fixedCosts)}</td></tr>
-      <tr class="total"><td>Monthly profit</td><td class="${loss ? 'neg' : 'pos'}">${money(x.operatingProfit)}</td></tr>
-    </table>
-    <dl class="stats">
-      <div class="stat"><dt>Each visitor is worth</dt><dd>${x.revenuePerVisitor === null ? '—' : money(x.revenuePerVisitor)}</dd>
-        <div class="why">${r.notes.revenuePerVisitor || 'Sales after refunds, divided by visitors.'}</div></div>
-      <div class="stat"><dt>Ad cost per customer</dt><dd>${x.blendedCAC === null ? '—' : money(x.blendedCAC)}</dd>
-        <div class="why">${r.notes.blendedCAC || DEFINITIONS.blendedCAC}</div></div>
-      <div class="stat"><dt>Most you can pay per customer</dt><dd class="${x.breakEvenCAC <= 0 ? 'neg' : ''}">${money(x.breakEvenCAC)}</dd>
-        <div class="why">${r.notes.breakEvenCAC || DEFINITIONS.breakEvenCAC}</div></div>
-    </dl>`;
-  const dock = $('dockProfit');
-  dock.textContent = money(x.operatingProfit);
-  dock.classList.toggle('loss', loss);
-}
-
-function goalBlock(title, g, visitors) {
-  if (!g) return `<div class="goal"><h3>${title}</h3><p class="note">Add a goal on the left to see what it takes.</p></div>`;
-  if (!g.reachable) return `<div class="goal"><h3>${title}: ${money(g.goal)}</h3><p class="note">${g.notes.requiredOrders}</p></div>`;
-
-  const progress = g.requiredVisitors ? Math.min(1, visitors / g.requiredVisitors) : (g.requiredVisitors === 0 ? 1 : 0);
-  const done = g.additionalVisitors === 0;
-  let away = '';
-  if (g.requiredVisitors === null) away = `<p class="note">${g.notes.requiredVisitors}</p>`;
-  else if (done) away = `<p class="away pos">Your current traffic already reaches this goal.</p>`;
-  else away = `<p class="away">You're ${whole(g.additionalVisitors)} visitors away.</p>`;
-
-  let lever = '';
-  if (!done && g.requiredConversionRate !== null) {
-    lever = `<p class="lever">Or keep today's traffic and get ${pct(g.requiredConversionRate)} of visitors to buy.</p>`;
-  } else if (!done && g.notes.requiredConversionRate) {
-    lever = `<p class="lever">${g.notes.requiredConversionRate}</p>`;
-  }
-
-  return `<div class="goal">
-    <h3>${title}: ${money(g.goal)} a month</h3>
-    <div class="needs">
-      <span><b>${whole(g.requiredOrders)}</b> orders</span>
-      <span><b>${whole(g.requiredVisitors)}</b> visitors</span>
-    </div>
-    ${g.requiredVisitors !== null ? `<div class="track" role="img" aria-label="${Math.round(progress * 100)}% of the visitors needed"><div class="fill ${done ? 'done' : ''}" style="width:${progress * 100}%"></div></div>` : ''}
-    ${away}${lever}
-    ${g.notes.adSpend ? `<p class="note">${g.notes.adSpend}</p>` : ''}
-  </div>`;
-}
-
-function renderGoals(r) {
-  $('goalsBody').innerHTML =
-    goalBlock('Revenue goal', r.goals.revenue, r.inputs.visitors) +
-    goalBlock('Profit goal', r.goals.profit, r.inputs.visitors);
-}
-
-function renderScenarios(baseInputs, validInputs) {
-  if (!scenarios) scenarios = defaultScenarios(validInputs);
-  const keys = Object.keys(SCEN_NAMES);
-  const s = compareScenarios(baseInputs, scenarios);
-  const cell = (k, field, fmt) => `<input aria-label="${SCEN_NAMES[k]} ${field}" data-scen="${k}" data-field="${field}" inputmode="decimal" value="${fmt(scenarios[k][field])}">`;
-  const outRow = (label, fn) => `<tr class="out"><td>${label}</td>${keys.map((k) => `<td>${s[k].ok ? fn(s[k]) : '—'}</td>`).join('')}</tr>`;
-
-  $('scen').innerHTML = `
-    <thead><tr><th></th>${keys.map((k) => `<th>${SCEN_NAMES[k]}</th>`).join('')}</tr></thead>
-    <tbody>
-      <tr><td>Price ($)</td>${keys.map((k) => `<td>${cell(k, 'price', (v) => v)}</td>`).join('')}</tr>
-      <tr><td>Visitors</td>${keys.map((k) => `<td>${cell(k, 'visitors', (v) => v)}</td>`).join('')}</tr>
-      <tr><td>Who buy (%)</td>${keys.map((k) => `<td>${cell(k, 'conversionRate', pctToUI)}</td>`).join('')}</tr>
-      ${outRow('Orders', (x) => formatCount(x.results.orders))}
-      ${outRow('Sales after refunds', (x) => money(x.results.netRevenue))}
-      ${outRow('Monthly profit', (x) => `<span class="${x.results.operatingProfit < 0 ? 'neg' : 'pos'}">${money(x.results.operatingProfit)}</span>`)}
-    </tbody>`;
-}
-
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-function render({ rebuildScenarios = true } = {}) {
+/* ---------- Render loop ---------- */
+function render() {
   const raw = readInputs();
   const r = calculate(raw);
   showErrors(r.ok ? {} : r.errors);
+  $('detail').style.opacity = r.ok ? '' : '.35';
   if (!r.ok) {
-    $('monthBody').innerHTML = `<p class="blocked">Fix the highlighted fields to see your numbers.</p>`;
-    $('goalsBody').innerHTML = '';
+    $('profit').textContent = '—'; shownProfit = null;
+    $('because').innerHTML = '<span class="blocked-msg">Fix the highlighted fields to see your numbers.</span>';
     $('dockProfit').textContent = '—';
     return;
   }
   renderMonth(r);
-  renderGoals(r);
-  if (rebuildScenarios) renderScenarios(raw, r.inputs);
-  else updateScenarioOutputs(raw);
+  renderGoal('goal-revenue', r.goals.revenue, r.inputs.visitors);
+  renderGoal('goal-profit', r.goals.profit, r.inputs.visitors);
+  if (!scenarios) { scenarios = defaultScenarios(r.inputs); fillScenarioInputs(); }
+  renderScenarioOutputs(raw);
   save();
-}
-
-// Re-render scenario outputs without replacing the input being typed in.
-function updateScenarioOutputs(raw) {
-  const active = document.activeElement;
-  const pos = active?.selectionStart;
-  renderScenarios(raw, calculate(raw).inputs);
-  if (active?.dataset?.scen) {
-    const again = document.querySelector(`[data-scen="${active.dataset.scen}"][data-field="${active.dataset.field}"]`);
-    again?.focus();
-    try { again?.setSelectionRange(pos, pos); } catch { /* not supported for this input */ }
-  }
 }
 
 form.addEventListener('input', (e) => {
   const t = e.target;
   if (t.dataset.pair) {
     const other = $(t.dataset.pair);
-    if (t.type === 'range') other.value = t.value;
-    else if (Number.isFinite(Number(t.value))) other.value = t.value;
+    if (t.type === 'range') { other.value = t.value; paintSlider(t); }
+    else if (t.value.trim() !== '' && Number.isFinite(Number(t.value))) { other.value = t.value; paintSlider(other); }
   }
   render();
 });
-
 $('scen').addEventListener('input', (e) => {
   const t = e.target;
-  if (!t.dataset.scen) return;
+  if (!t.dataset.scen || t.value.trim() === '') return;
   const n = Number(t.value);
-  if (!Number.isFinite(n) || t.value.trim() === '') return;
+  if (!Number.isFinite(n)) return;
   scenarios[t.dataset.scen][t.dataset.field] = t.dataset.field === 'conversionRate' ? n / 100 : n;
-  render({ rebuildScenarios: false });
+  render();
 });
-
 $('resetScen').addEventListener('click', () => {
   const r = calculate(readInputs());
   if (!r.ok) return;
   scenarios = defaultScenarios(r.inputs);
+  fillScenarioInputs();
   render();
 });
 
+/* ---------- GoHighLevel embed: report height so the iframe fits its content ---------- */
+if (document.documentElement.classList.contains('embed') && window.parent !== window) {
+  const post = () => window.parent.postMessage({ type: 'pig-revenue-calculator:height', height: document.documentElement.scrollHeight, version: APP_VERSION }, '*');
+  new ResizeObserver(post).observe(document.body);
+  post();
+}
+
 $('disclaimer').textContent = DEFINITIONS.disclaimer;
+$('versionLine').textContent = `Revenue Calculator v${APP_VERSION}, calculation engine v${ENGINE_VERSION}`;
+buildScenarioTable();
 load();
+syncSliders();
+if (scenarios) fillScenarioInputs();
 render();
 </script>
 </body>
