@@ -30,6 +30,7 @@
  */
 
 import { ENGINE_VERSION } from './version.js';
+import { PLANNING_RANGES } from './guidance.js';
 export { ENGINE_VERSION };
 
 export const OFFER_KEYS = Object.freeze(['bump', 'upsell', 'downsell', 'oto']);
@@ -54,10 +55,11 @@ export const DEFAULT_INPUTS = deepFreeze({
   conversionRate: 0.02,
   fulfillmentCost: 0,
   offers: {
-    bump: { enabled: true, name: '', price: 17, rate: 0.35, fulfillmentCost: 0 },
-    upsell: { enabled: true, name: '', price: 97, rate: 0.25, fulfillmentCost: 0 },
-    downsell: { enabled: true, name: '', price: 47, rate: 0.2, fulfillmentCost: 0 },
-    oto: { enabled: true, name: '', price: 297, rate: 0.1, fulfillmentCost: 0, reachRate: 1 },
+    // New sellers start at the conservative planning rate (see guidance.js).
+    bump: { enabled: true, name: '', price: 17, rate: PLANNING_RANGES.bump.conservative, fulfillmentCost: 0 },
+    upsell: { enabled: true, name: '', price: 97, rate: PLANNING_RANGES.upsell.conservative, fulfillmentCost: 0 },
+    downsell: { enabled: true, name: '', price: 47, rate: PLANNING_RANGES.downsell.conservative, fulfillmentCost: 0 },
+    oto: { enabled: true, name: '', price: 297, rate: PLANNING_RANGES.oto.conservative, fulfillmentCost: 0, reachRate: 1 },
   },
   adSpend: 1500,
   processingPct: 0.029,

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="0.3.4">
+<meta name="app-version" content="0.4.0">
 <title>Authority Funnel Revenue Calculator | Priddy Impact Group</title>
 <meta name="description" content="Plan the five evergreen digital products in your authority funnel and see how they work together on order value, revenue and profit.">
 <link rel="icon" href="assets/pig-monogram-gold.png">
@@ -205,6 +205,38 @@
   .switch input:disabled + .track { opacity: .45; cursor: not-allowed; }
   .switch:has(input:disabled) { cursor: not-allowed; }
   @media (max-width: 420px) { .switch .sw-txt { display: none; } .pad { padding: 22px 18px; } }
+
+  /* Planning ranges under each offer slider */
+  .ticks { position: relative; height: 9px; margin: -2px 11px 6px; }
+  .ticks i { position: absolute; top: 0; left: calc(var(--v) * 1%); width: 2px; height: 9px; border-radius: 1px; transform: translateX(-1px); background: var(--gold-dark); opacity: .55; }
+  .ticks i.t-planning { opacity: .8; }
+  .ticks i.t-stretch { opacity: .55; }
+  .guide { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 6px; }
+  .g-label { font-size: 0.74rem; color: var(--slate); margin-right: 2px; }
+  .rchip {
+    font: 400 0.76rem var(--font); color: var(--teal); cursor: pointer; padding: 3px 10px; border-radius: 999px;
+    background: var(--white); border: 1px solid var(--slate-line); transition: background-color .2s, border-color .2s, color .2s;
+  }
+  .rchip b { font-weight: 600; }
+  .rchip:hover { border-color: var(--gold); background: var(--gold-tint); }
+  .rchip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--white); }
+  .g-status { margin: 0 0 12px; font-size: 0.78rem; color: var(--slate); min-height: 1.2em; }
+  .g-status[data-band="above"] { color: var(--gold-dark); font-weight: 500; }
+  .newbie {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+    margin: 0 0 18px; padding: 12px 14px; border-radius: var(--radius-sm);
+    background: var(--gold-tint); border: 1px solid color-mix(in oklab, var(--gold) 55%, var(--white));
+  }
+  .newbie div { flex: 1 1 260px; font-size: 0.85rem; line-height: 1.5; }
+  .newbie b { display: block; font-weight: 600; }
+  .newbie span { color: var(--slate); }
+  .ranges-note { margin-top: 14px; }
+
+  /* Softer focus on sliders: a ring on the knob instead of a box around the track */
+  input[type=range]:focus-visible { outline: none; }
+  input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 5px color-mix(in oklab, var(--gold) 45%, transparent), 0 2px 8px rgb(0 43 56 / 25%); }
+  input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 5px color-mix(in oklab, var(--gold) 45%, transparent); }
+  input[type=range]:focus:not(:focus-visible) { outline: none; }
 
   /* ---------- Results hero ---------- */
   .hero {
@@ -472,7 +504,15 @@
       <section class="card pad" aria-labelledby="s2">
         <div class="sec-head"><span class="sec-num">2</span><h2 id="s2">Additional offers</h2></div>
         <p class="hint">Turn on the offers in your funnel. Each one is shown only to the buyers who reach it.</p>
+        <div class="newbie">
+          <div>
+            <b>Not sure how many buyers will say yes?</b>
+            <span>Every offer starts at the conservative planning rate, a sensible place to begin if you're new. Tap a range under any slider to try it.</span>
+          </div>
+          <button type="button" class="btn small" id="useStarter">Reset all to conservative</button>
+        </div>
         <div class="flow" id="flow"></div>
+        <p class="note ranges-note">Planning ranges are starting points for planning an authority funnel. They are not benchmarks or predictions, and your own results will differ.</p>
       </section>
 
       <section class="card pad" aria-labelledby="s3">
@@ -634,7 +674,7 @@
     <div class="sec-head"><span class="sec-num">6</span><h2 id="s6">Scenario comparison</h2></div>
     <p class="hint">Each version has its own traffic, conversion and acceptance rates. Prices and costs carry over from above.</p>
     <div class="scen-wrap"><table class="scen" id="scen"></table></div>
-    <div class="actions"><button type="button" class="btn" id="resetScen">Reset to my current numbers</button></div>
+    <div class="actions"><button type="button" class="btn" id="resetScen">Reset to my current numbers</button><button type="button" class="btn" id="rangeScen">Use planning ranges for acceptance</button></div>
   </section>
 
   <!-- Section 7: save & export -->
@@ -679,8 +719,9 @@
 import {
   calculate, compareScenarios, defaultScenarios, DEFAULT_INPUTS, DEFINITIONS, OFFER_KEYS, OFFER_LABELS,
   formatMoney, formatCount,
-} from './src/calc.js?v=0.3.4';
-import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.3.4';
+} from './src/calc.js?v=0.4.0';
+import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.4.0';
+import { PLANNING_RANGES, RANGE_KEYS, RANGE_LABELS, describeRate } from './src/guidance.js?v=0.4.0';
 
 const $ = (id) => document.getElementById(id);
 const CURRENT_KEY = 'pig-dp002-current';
@@ -736,7 +777,13 @@ function buildOffers() {
             <div class="err" data-err="offers.${k}.rate"></div>
           </div>
         </div>
-        <input type="range" id="r-${k}-rate" min="0" max="100" step="1" aria-label="${OFFER_LABELS[k]} acceptance slider" data-pair="f-${k}-rate" style="margin:-8px 0 12px">
+        <input type="range" id="r-${k}-rate" min="0" max="100" step="1" aria-label="${OFFER_LABELS[k]} acceptance slider" data-pair="f-${k}-rate" style="margin:-8px 0 0" aria-describedby="gs-${k}">
+        <div class="ticks" aria-hidden="true">${RANGE_KEYS.map((b) => `<i class="t-${b}" style="--v:${PLANNING_RANGES[k][b] * 100}"></i>`).join('')}</div>
+        <div class="guide">
+          <span class="g-label">Planning ranges</span>
+          ${RANGE_KEYS.map((b) => `<button type="button" class="rchip" data-offer="${k}" data-band="${b}" data-v="${PLANNING_RANGES[k][b]}">${RANGE_LABELS[b]} <b>${pctToUI(PLANNING_RANGES[k][b])}%</b></button>`).join('')}
+        </div>
+        <p class="g-status" id="gs-${k}"></p>
         <p class="yield" id="yield-${k}"></p>
         <details class="more" style="margin-bottom:12px">
           <summary>Cost to deliver each sale</summary>
@@ -869,6 +916,11 @@ function renderResults(r) {
   for (const o of r.offers.slice(1)) {
     $(`who-${o.key}`).textContent = o.active ? OFFER_UI[o.key].who(o.eligible) : (o.key === 'downsell' && !r.inputs.offers.upsell.enabled ? 'Needs an upsell' : 'Not in this funnel');
     $(`yield-${o.key}`).innerHTML = `About <b>${formatCount(o.buyers)}</b> buyers, <b>${money(o.revenue)}</b> a month`;
+    const d = describeRate(o.key, o.rate);
+    const gs = $(`gs-${o.key}`);
+    gs.textContent = d ? d.message : '';
+    gs.dataset.band = d ? d.band : '';
+    for (const c of document.querySelectorAll(`.rchip[data-offer="${o.key}"]`)) c.setAttribute('aria-pressed', String(Math.abs(Number(c.dataset.v) - o.rate) < 1e-9));
   }
 
   const dA = $('d-aov'); dA.textContent = money(x.aov);
@@ -969,7 +1021,8 @@ function render() {
   const named = $('f-productName').value.trim() !== '';
   document.documentElement.classList.toggle('locked', !named);
   for (const sl of document.querySelectorAll('input[type=range]')) sl.disabled = !named;
-  for (const id of ['saveBtn', 'reportBtn', 'resetScen']) $(id).disabled = !named;
+  for (const id of ['saveBtn', 'reportBtn', 'resetScen', 'rangeScen', 'useStarter']) $(id).disabled = !named;
+  for (const c of document.querySelectorAll('.rchip')) c.disabled = !named;
   for (const el of document.querySelectorAll('.gated input, .gated button')) el.tabIndex = named ? 0 : -1;
   if (!named) {
     for (const id of ['d-aov', 'd-profit']) $(id).textContent = '—';
@@ -1124,6 +1177,31 @@ $('resetScen').addEventListener('click', () => {
   if (!r.ok) return;
   scenarios = defaultScenarios(readInputs());
   buildScenarioTable(r);
+  render();
+});
+function setOfferRate(k, v) {
+  const box = $(`f-${k}-rate`);
+  box.value = pctToUI(v);
+  const sl = $(`r-${k}-rate`); sl.value = box.value; paintSlider(sl);
+}
+document.addEventListener('click', (e) => {
+  const c = e.target.closest('.rchip');
+  if (!c) return;
+  setOfferRate(c.dataset.offer, Number(c.dataset.v));
+  render();
+});
+$('useStarter').addEventListener('click', () => {
+  for (const k of OFFER_KEYS) setOfferRate(k, PLANNING_RANGES[k].conservative);
+  render();
+});
+$('rangeScen').addEventListener('click', () => {
+  if (!scenarios) return;
+  const map = { conservative: 'conservative', expected: 'planning', optimistic: 'stretch' };
+  for (const [sc, band] of Object.entries(map)) {
+    scenarios[sc].offers = scenarios[sc].offers || {};
+    for (const k of OFFER_KEYS) scenarios[sc].offers[k] = { ...(scenarios[sc].offers[k] || {}), rate: PLANNING_RANGES[k][band] };
+  }
+  $('scen').innerHTML = '';
   render();
 });
 $('goName').addEventListener('click', () => { const f = $('f-productName'); f.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' }); f.focus({ preventScroll: true }); });

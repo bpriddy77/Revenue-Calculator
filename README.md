@@ -1,11 +1,11 @@
 # DP-002 — Authority Funnel Revenue Calculator
 
-**Version 0.3.4** (calculation engine 2.0.0, data schema 2). See `CHANGELOG.md`.
+**Version 0.4.0** (calculation engine 2.1.0, data schema 2). See `CHANGELOG.md`.
 
 Helps coaches, consultants and service providers plan an authority funnel: five evergreen digital products (main product, order bump, upsell, downsell, one-time offer) that showcase their expertise and lead buyers toward bigger one-on-one work. Models how the five work together on average order value (AOV), revenue and profit. Dependency-free; runs in the browser and on the server.
 
 ```bash
-npm test        # 32 tests, Node 18+
+npm test        # 35 tests, Node 18+
 ```
 
 ```js
@@ -64,6 +64,17 @@ Added for the funnel model in v0.3.0 (assumptions, open to change):
 | 10 | The **revenue goal is measured after refunds**. | Consistent with decision 1 and the original calculator. |
 | 11 | **AOV is always shown**, even with zero buyers, because it comes from acceptance rates. | Lets customers design order value before they have traffic. |
 | 12 | Default scenarios are **½×, 1× and 1½×** the customer's conversion and acceptance rates, capped at 100%. | Each scenario is fully editable. |
+
+## Planning ranges (`src/guidance.js`)
+
+| Offer | Conservative (default) | Planning | Stretch |
+|---|---|---|---|
+| Order bump | 10% | 20% | 35% |
+| Upsell | 3% | 6% | 15% |
+| Downsell | 2% | 4% | 8% |
+| One-time offer | 2% | 5% | 10% |
+
+Supplied by Priddy Impact Group as planning starting points. They are **not** presented as industry benchmarks or predictions; if a published source is adopted later, cite it on the page. New sellers start at Conservative. Edit the numbers in one place (`guidance.js`); defaults, slider marks, buttons and scenario fill all follow.
 
 ## UI guidance
 

@@ -4,13 +4,22 @@ import {
   calculate, compareScenarios, defaultScenarios, validateInputs, DEFAULT_INPUTS, OFFER_KEYS,
 } from '../src/calc.js';
 import { ENGINE_VERSION } from '../src/version.js';
+import { PLANNING_RANGES, describeRate } from '../src/guidance.js';
 
 const close = (actual, expected, msg = '') =>
   assert.ok(Math.abs(actual - expected) < 1e-6, `${msg} expected ${expected}, got ${actual}`);
 const offer = (r, key) => r.offers.find((o) => o.key === key);
 
-// Defaults match the brief's screenshot: $27 main, 100 buyers, 17/35%, 97/25%, 47/20%, 297/10%.
-const base = DEFAULT_INPUTS;
+// The brief's worked example: $27 main, 100 buyers, 17/35%, 97/25%, 47/20%, 297/10%.
+const base = {
+  ...DEFAULT_INPUTS,
+  offers: {
+    bump: { ...DEFAULT_INPUTS.offers.bump, rate: 0.35 },
+    upsell: { ...DEFAULT_INPUTS.offers.upsell, rate: 0.25 },
+    downsell: { ...DEFAULT_INPUTS.offers.downsell, rate: 0.2 },
+    oto: { ...DEFAULT_INPUTS.offers.oto, rate: 0.1 },
+  },
+};
 const offersOff = Object.fromEntries(OFFER_KEYS.map((k) => [k, { enabled: false }]));
 const withOffers = (patch) => ({
   ...base,
@@ -286,6 +295,32 @@ test('accepts form strings', () => {
   assert.equal(inputs.price, 1299);
   assert.equal(inputs.adSpend, 0);
   assert.equal(inputs.offers.bump.enabled, true);
+});
+
+/* ---------- Planning ranges ---------- */
+
+test('new sellers start at the conservative planning rates', () => {
+  for (const k of OFFER_KEYS) assert.equal(DEFAULT_INPUTS.offers[k].rate, PLANNING_RANGES[k].conservative, k);
+  const r = calculate(DEFAULT_INPUTS);
+  close(r.results.aov, 27 + 17 * 0.1 + 97 * 0.03 + 47 * 0.97 * 0.02 + 297 * 0.02); // 38.4618
+});
+
+test('planning ranges are ordered conservative < planning < stretch, within 0–100%', () => {
+  for (const k of OFFER_KEYS) {
+    const r = PLANNING_RANGES[k];
+    assert.ok(r.conservative > 0 && r.conservative < r.planning && r.planning < r.stretch && r.stretch <= 1, k);
+  }
+});
+
+test('describeRate places a rate against the ranges', () => {
+  assert.equal(describeRate('bump', 0.10).band, 'conservative');
+  assert.match(describeRate('bump', 0.10).message, /Matches the conservative/);
+  assert.equal(describeRate('bump', 0.05).band, 'below');
+  assert.equal(describeRate('bump', 0.15).band, 'conservative');
+  assert.equal(describeRate('bump', 0.25).band, 'planning');
+  assert.equal(describeRate('bump', 0.35).band, 'stretch');
+  assert.equal(describeRate('bump', 0.50).band, 'above');
+  assert.equal(describeRate('main', 0.5), null);
 });
 
 test('results carry the engine version', () => {

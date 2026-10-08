@@ -6,6 +6,18 @@ All builds follow [semantic versioning](https://semver.org). The version lives i
 - **ENGINE_VERSION**: the calculation rules. Bump whenever a formula changes.
 - **DATA_SCHEMA**: the shape of saved data. Bump when the saved format changes.
 
+## [0.4.0] - 2026-10-08
+### Added
+- **Planning ranges** for each offer's acceptance rate (Conservative, Planning, Stretch), kept in `src/guidance.js`:
+  order bump 10/20/35%, upsell 3/6/15%, downsell 2/4/8%, one-time offer 2/5/10%.
+- Under every offer slider: tick marks at the three rates, one-tap buttons to apply each, and a live note saying where the current rate sits (e.g. "Above the stretch rate of 35%. Make sure you have results that support it.").
+- "Not sure how many buyers will say yes?" panel in Section 2 with **Reset all to conservative**.
+- Scenario comparison: **Use planning ranges for acceptance** fills Conservative / Expected / Optimistic with the three ranges.
+- Ranges are labeled as planning starting points, not benchmarks or predictions.
+### Changed
+- New sellers now start at the conservative rate for every offer (engine 2.1.0 defaults). The brief's worked example moved into the test fixture.
+- Sliders show a soft gold ring on the knob when focused instead of a box around the track.
+
 ## [0.3.4] - 2026-10-08
 ### Changed
 - "Authority" in the page header is now brand gold (`#BEAE88`).
