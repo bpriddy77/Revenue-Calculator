@@ -1,11 +1,11 @@
 # DP-002 — Authority Funnel Revenue Calculator
 
-**Version 0.7.0** (calculation engine 3.0.0, data schema 4). See `CHANGELOG.md`.
+**Version 0.8.0** (calculation engine 3.1.0, data schema 4). See `CHANGELOG.md`.
 
 Helps coaches, consultants and service providers plan an authority funnel: five evergreen digital products (main product, order bump, upsell, downsell, one-time offer) that showcase their expertise and lead buyers toward bigger one-on-one work. Models how the five work together on average order value (AOV), revenue and profit. Dependency-free; runs in the browser and on the server.
 
 ```bash
-npm test        # 52 tests, Node 18+
+npm test        # 56 tests, Node 18+
 ```
 
 ```js
@@ -69,13 +69,13 @@ Added for the funnel model in v0.3.0 (assumptions, open to change):
 | 9 | **ROAS** = funnel revenue before refunds ÷ ad spend. | The common industry definition. |
 | 10 | The **revenue goal is measured after refunds**. | Consistent with decision 1 and the original calculator. |
 | 11 | **AOV is always shown**, even with zero buyers, because it comes from acceptance rates. | Lets customers design order value before they have traffic. |
-| 12 | Default scenarios are **½×, 1× and 1½×** the customer's conversion and acceptance rates, capped at 100%. | Each scenario is fully editable. |
+| 12 | Initial scenarios use the **Conservative / Expected / Stretch** conversion and take rates (v0.5.0+), with the customer's own traffic and ad spend. | Each scenario is fully editable. |
 
 ## Traffic model (v0.7.0)
 
 | Mode | Visitors | Notes |
 |---|---|---|
-| Ads + social reach (default) | ad spend ÷ cost per click + social reach × click-through | Cost per click, reach and click-through are example values the customer replaces. No presets. |
+| Ads + social reach (default) | ad spend ÷ cost per click + social reach × click-through | Examples the customer replaces: $300/month ad spend ($10 a day), $0.75 per click, 75,000 reach, 2% click-through, chosen so a new user opens to a modest profit (Malissa, v0.8.0). No presets for cost per click or click-through (decided with Malissa). |
 | I know my monthly visitors | entered directly | Ad spend is still counted as a cost. |
 
 In ads + social mode the profit goal solves for buyers with ad spend growing alongside paid visitors: profit = buyers × contribution − (visitors needed − social visitors) × cost per click − operating costs. When contribution per buyer is below cost per click ÷ conversion, more ads can't reach the goal and the page says why.
@@ -111,6 +111,8 @@ Impossible numbers are flagged and that row is not applied. Editing a rate by ha
 **Make it fluid and motivating.** Recalculate on every keystroke, slider move or toggle. `additionalVisitors` drives the "You're X visitors away" line; `requiredConversionRate` and `requiredBuyersAtTargetAov` show the other two levers.
 
 **Income-claim wording (FTC).** The product name, page and report avoid dollar figures and earnings language. Do not use "$100K", "passive income", "make money while you sleep", "guaranteed" or similar in the product name, page copy, report or sales page. Prefer "evergreen", "low-maintenance", "plan", "model" and "at these numbers". Example figures are always labeled as examples the customer replaces.
+
+**Encouraging, not alarming.** A new user must open to a profit (tested). When numbers dip into a loss, point forward to "Ways to grow" (`growthLevers()`) rather than leading with a warning.
 
 **Keep the honesty guardrails visible.** Show `DEFINITIONS.disclaimer` near the results, not hidden in a footer. Use wording like "at these numbers" or "your plan shows", and never "you will earn." Label every default as illustrative and editable. Because this is a paid product, the in-app copy and the sales page both need to avoid sounding like income promises.
 

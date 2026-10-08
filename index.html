@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="0.7.0">
+<meta name="app-version" content="0.8.0">
 <title>Authority Funnel Revenue Calculator | Priddy Impact Group</title>
 <meta name="description" content="Map your digital product offers, explore how each purchase contributes to your average order value, and see the numbers behind your revenue goals.">
 <link rel="icon" href="assets/pig-monogram-gold.png">
@@ -291,6 +291,17 @@
     .steps > li:not(:last-child)::after { top: auto; bottom: -13px; right: auto; left: 18px; transform: rotate(90deg); }
   }
 
+  /* Ways to grow */
+  .grow { margin: 0 0 20px; padding: 0 0 18px; border-bottom: 1px solid var(--slate-line); }
+  .grow-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .grow-list li { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; align-items: center; padding: 11px 14px; border-radius: var(--radius-sm); background: var(--gold-tint); border: 1px solid color-mix(in oklab, var(--gold) 45%, var(--white)); }
+  .grow-list .g-title { font-weight: 600; font-size: 0.88rem; line-height: 1.35; }
+  .grow-list .g-detail { grid-column: 1; font-size: 0.78rem; color: var(--slate); line-height: 1.4; }
+  .grow-list .g-gain { grid-column: 2; grid-row: 1; justify-self: end; font-weight: 700; font-size: 0.95rem; color: var(--gain); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .grow-list .btn { grid-column: 2; grid-row: 2; justify-self: end; }
+  .grow-list li.done { background: var(--teal-tint); border-color: var(--slate-line); }
+  .grow-empty { margin: 0; font-size: 0.86rem; color: var(--teal); }
+
   /* Order value comparison */
   .ladder { margin: 0 0 20px; padding: 0 0 18px; border-bottom: 1px solid var(--slate-line); }
   .ladder-figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
@@ -544,7 +555,7 @@
         </div>
         <div class="subsec">
           <h3 class="subsec-h">Where your visitors come from</h3>
-          <p class="explain">Visitors reach your sales page two ways: people who click your <b>ads</b>, and people who find you through your <b>social media</b> posts. <span class="ex">Example: $1,500 in ads at $1.00 a click brings about 1,500 visitors; 25,000 people seeing your posts with 2% clicking through brings 500 more.</span></p>
+          <p class="explain">Visitors reach your sales page two ways: people who click your <b>ads</b>, and people who find you through your <b>social media</b> posts. <span class="ex">Example: $300 a month in ads ($10 a day) at $1.00 a click brings about 300 visitors; 25,000 people seeing your posts with 2% clicking through brings 500 more.</span></p>
           <input type="hidden" id="trafficMode" data-field="trafficMode">
           <div class="seg seg2" id="trafficSeg" role="group" aria-label="How to enter your traffic">
             <button type="button" class="seg-btn" data-traffic="sources" aria-pressed="false">Ads + social reach</button>
@@ -557,6 +568,7 @@
                 <label for="f-adSpend">Ad spend <span class="sub">/ month</span></label>
                 <div class="box"><span>$</span><input id="f-adSpend" data-field="adSpend" inputmode="decimal" data-pair="r-adSpend"></div>
                 <input type="range" id="r-adSpend" min="0" max="10000" step="50" aria-label="Monthly ad spend slider" data-pair="f-adSpend">
+                <small class="fhint" id="adPerDay"></small>
                 <div class="err" data-err="adSpend"></div>
               </div>
               <div class="field">
@@ -737,9 +749,13 @@
             <p class="small" id="o-profitNote"></p>
           </div>
         </div>
-        <p class="warn" id="o-lossWarn" hidden>At these numbers the funnel loses money each month. Try higher prices, lower ad spend, or getting more buyers to say yes.</p>
+        <p class="warn" id="o-lossWarn" hidden>At these numbers the funnel doesn't cover its costs yet. The ideas under "Ways to grow" show what changes that.</p>
       </div>
       <div class="res-body" id="o-body">
+        <div class="grow" aria-labelledby="growH">
+          <h3 class="sub-h" id="growH" style="margin-top:0">Ways to grow <small>Estimated at your current numbers</small></h3>
+          <ul class="grow-list" id="growList"></ul>
+        </div>
         <div class="ladder" aria-labelledby="ladderH">
           <h3 class="sub-h" id="ladderH" style="margin-top:0">Order value: the ceiling versus the average</h3>
           <div class="ladder-figs">
@@ -892,11 +908,11 @@
 
 <script type="module">
 import {
-  calculate, compareScenarios, defaultScenarios, takeRatesFromData, DATA_ROWS, DEFAULT_INPUTS, DEFINITIONS, OFFER_KEYS, OFFER_LABELS,
+  calculate, compareScenarios, defaultScenarios, takeRatesFromData, growthLevers, DATA_ROWS, DEFAULT_INPUTS, DEFINITIONS, OFFER_KEYS, OFFER_LABELS,
   formatMoney, formatCount,
-} from './src/calc.js?v=0.7.0';
-import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.7.0';
-import { PLANNING_RANGES, RANGE_KEYS, RANGE_LABELS, ASSUMPTION_LABEL, describeRate, matchingScenario } from './src/guidance.js?v=0.7.0';
+} from './src/calc.js?v=0.8.0';
+import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.8.0';
+import { PLANNING_RANGES, RANGE_KEYS, RANGE_LABELS, ASSUMPTION_LABEL, describeRate, matchingScenario } from './src/guidance.js?v=0.8.0';
 
 const $ = (id) => document.getElementById(id);
 const CURRENT_KEY = 'pig-dp002-current';
@@ -1149,6 +1165,39 @@ function renderResults(r) {
   const dP = $('d-profit'); dP.textContent = money(x.operatingProfit); dP.classList.toggle('loss', loss);
 }
 
+let currentLevers = [];
+function renderGrowth(raw) {
+  currentLevers = growthLevers(raw);
+  const list = $('growList');
+  if (!currentLevers.length) {
+    list.innerHTML = '<li class="done"><p class="grow-empty">Your rates are already strong across the funnel. From here, growing your audience and testing prices are the next levers.</p></li>';
+    return;
+  }
+  list.innerHTML = currentLevers.map((l, n) => `<li>
+      <span class="g-title">${esc(l.title)}</span>
+      <span class="g-gain">+${money0(l.profitDelta)}/mo</span>
+      <span class="g-detail">${esc(l.detail)}${l.aovDelta > 0.005 ? ` Order value +${money(l.aovDelta)}.` : ''}</span>
+      <button type="button" class="btn small" data-lever="${n}">Try it</button>
+    </li>`).join('');
+}
+$('growList').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-lever]');
+  if (!b) return;
+  const l = currentLevers[Number(b.dataset.lever)];
+  if (!l) return;
+  const c = l.change;
+  if (c.offers) {
+    for (const [k, v] of Object.entries(c.offers)) {
+      if (v.enabled) { $(`t-${k}`).checked = true; }
+      if (v.rate !== undefined) setOfferRate(k, v.rate);
+    }
+    if (mode() === 'data' && Object.values(c.offers).some((v) => v.rate !== undefined)) $('rateMode').value = 'scenario';
+  }
+  if (c.conversionRate !== undefined) { setRateBox('f-conversionRate', c.conversionRate); if (mainMode() === 'data') $('mainMode').value = 'scenario'; }
+  if (c.socialReach !== undefined) { $('f-socialReach').value = c.socialReach; const sl = $('r-socialReach'); sl.value = c.socialReach; paintSlider(sl); }
+  render();
+});
+
 function renderGoal(id, g, visitors, aovTarget) {
   const root = $(id);
   const set = (k, v) => { root.querySelector(`[data-k="${k}"]`).textContent = v; };
@@ -1260,6 +1309,7 @@ function render() {
     return;
   }
   renderResults(r);
+  renderGrowth(raw);
   renderGoal('g-revenue', r.goals.revenue, r.inputs.visitors, r.inputs.aovGoal);
   renderGoal('g-profit', r.goals.profit, r.inputs.visitors, r.inputs.aovGoal);
   renderAovGoal(r.goals.aov, r.results.maxCheckoutValue);
@@ -1517,6 +1567,8 @@ function updateMain(r) {
   $('sourcesPanel').hidden = tm !== 'sources';
   $('directPanel').hidden = tm !== 'direct';
   $('costAd').textContent = Number($('f-adSpend').value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const ad = Number($('f-adSpend').value);
+  $('adPerDay').textContent = Number.isFinite(ad) && ad > 0 ? `About ${money(ad / 30)} a day.` : 'No ad spend: visitors come from social reach only.';
   if (!r || !r.ok) { $('trafficSum').textContent = ''; return; }
   const x = r.results;
   if (tm === 'sources') {

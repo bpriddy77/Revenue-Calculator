@@ -29,7 +29,9 @@ async def main():
         check(await pg.evaluate("[...document.querySelectorAll('input[type=range]')].every(s => !s.disabled)"), 'sliders work immediately')
         await pg.fill('#f-productName', ''); await pg.wait_for_timeout(300)
         check(await txt('#o-aov') not in ('', '—'), 'a blank name never blocks results')
-        check(await txt('#lv-total') == '$438.00' or True, 'order value comparison renders')
+        check(not (await txt('#o-profit')).startswith('-'), 'a new user opens to a profit')
+        before = await txt('#o-profit'); await pg.click('#growList [data-lever="0"]'); await pg.wait_for_timeout(500)
+        check(before != await txt('#o-profit'), '"Try it" applies a growth idea')
 
         async def slide(sel, frac):
             await pg.locator(sel).scroll_into_view_if_needed()

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  calculate, compareScenarios, defaultScenarios, validateInputs, takeRatesFromData, DEFAULT_INPUTS, OFFER_KEYS,
+  calculate, compareScenarios, defaultScenarios, validateInputs, takeRatesFromData, growthLevers, DEFAULT_INPUTS, OFFER_KEYS,
 } from '../src/calc.js';
 import { ENGINE_VERSION } from '../src/version.js';
 import { PLANNING_RANGES, describeRate, matchingScenario, ASSUMPTION_LABEL } from '../src/guidance.js';
@@ -16,6 +16,7 @@ const base = {
   trafficMode: 'direct', // the example enters 5,000 visitors directly
   visitors: 5000,
   conversionRate: 0.02,
+  adSpend: 1500,
   offers: {
     bump: { ...DEFAULT_INPUTS.offers.bump, rate: 0.35 },
     upsell: { ...DEFAULT_INPUTS.offers.upsell, rate: 0.25 },
@@ -362,13 +363,19 @@ test('blank, partial, zero and invalid rows', () => {
 
 /* ---------- Traffic from ads and social reach ---------- */
 
-test('default traffic comes from ad spend and social reach', () => {
+test('default traffic comes from ad spend and social reach ($10 a day in ads)', () => {
+  assert.equal(DEFAULT_INPUTS.adSpend, 300);
   const r = calculate(DEFAULT_INPUTS);
-  close(r.results.paidVisitors, 1500, '$1,500 ÷ $1.00 per click');
-  close(r.results.organicVisitors, 500, '25,000 reach × 2%');
-  close(r.results.visitors, 2000);
-  close(r.results.buyers, 20, '2,000 × 1% conservative conversion');
-  close(r.results.paidCostPerBuyer, 100, '$1.00 per click ÷ 1%');
+  close(r.results.paidVisitors, 400, '$300 ÷ $0.75 per click');
+  close(r.results.organicVisitors, 1500, '75,000 reach × 2%');
+  close(r.results.visitors, 1900);
+  close(r.results.buyers, 19, '1,900 × 1% conservative conversion');
+  close(r.results.paidCostPerBuyer, 75, '$0.75 per click ÷ 1%');
+});
+
+test('a new user opens to a profit, not a loss', () => {
+  const x = calculate(DEFAULT_INPUTS).results;
+  assert.ok(x.operatingProfit > 0, `opening profit ${x.operatingProfit}`);
 });
 
 test('direct mode uses visitors as entered', () => {
@@ -380,11 +387,11 @@ test('direct mode uses visitors as entered', () => {
 test('cost per click must be above $0 when there is ad spend', () => {
   assert.ok(calculate({ ...DEFAULT_INPUTS, costPerClick: 0 }).errors.costPerClick);
   assert.equal(calculate({ ...DEFAULT_INPUTS, costPerClick: 0, adSpend: 0 }).ok, true);
-  close(calculate({ ...DEFAULT_INPUTS, adSpend: 0 }).results.visitors, 500, 'social only');
+  close(calculate({ ...DEFAULT_INPUTS, adSpend: 0 }).results.visitors, 1500, 'social only');
 });
 
 test('revenue goal shows the ad spend it would take', () => {
-  const g = calculate(DEFAULT_INPUTS).goals.revenue;
+  const g = calculate({ ...DEFAULT_INPUTS, adSpend: 1500, costPerClick: 1, socialReach: 25000 }).goals.revenue;
   assert.equal(g.requiredBuyers, 269); // 10,000 ÷ 37.31 retained per buyer
   assert.equal(g.requiredVisitors, 26900);
   close(g.requiredAdSpend, (26900 - 500) * 1);
@@ -393,7 +400,7 @@ test('revenue goal shows the ad spend it would take', () => {
 });
 
 test('profit goal is unreachable when each paid buyer costs more in clicks than they bring in', () => {
-  const r = calculate(DEFAULT_INPUTS); // $100 of clicks per paid buyer vs ~$35.87 contribution
+  const r = calculate({ ...DEFAULT_INPUTS, costPerClick: 1 }); // $100 of clicks per paid buyer vs ~$35.87 contribution
   assert.equal(r.goals.profit.reachable, false);
   assert.match(r.goals.profit.notes.requiredBuyers, /costs \$100\.00 in clicks/);
 });
@@ -413,6 +420,32 @@ test('profit goal reachable from social reach alone needs no ad spend', () => {
   const g = calculate({ ...DEFAULT_INPUTS, socialReach: 1000000, profitGoal: 1000 }).goals.profit;
   assert.equal(g.reachable, true);
   assert.equal(g.requiredAdSpend, 0);
+});
+
+/* ---------- Ways to grow ---------- */
+
+test('growth levers: only improvements, best first, with the change to apply', () => {
+  const levers = growthLevers(DEFAULT_INPUTS);
+  assert.ok(levers.length > 0 && levers.length <= 3);
+  for (let n = 1; n < levers.length; n++) assert.ok(levers[n - 1].profitDelta >= levers[n].profitDelta);
+  for (const l of levers) {
+    assert.ok(l.profitDelta > 0);
+    const merged = { ...DEFAULT_INPUTS, ...l.change, offers: Object.fromEntries(OFFER_KEYS.map((k) => [k, { ...DEFAULT_INPUTS.offers[k], ...(l.change.offers?.[k] || {}) }])) };
+    close(calculate(merged).results.operatingProfit, l.profitAfter, `${l.key} change reproduces its result`);
+  }
+});
+
+test('growth levers: offers at Expected roughly doubles the default profit', () => {
+  const l = growthLevers(DEFAULT_INPUTS, { limit: 5 }).find((x) => x.key === 'offersExpected');
+  assert.ok(l);
+  assert.ok(l.profitAfter > 2 * calculate(DEFAULT_INPUTS).results.operatingProfit * 0.9);
+});
+
+test('growth levers suggest turning on an offer that is off, and skip what is already strong', () => {
+  const off = { ...DEFAULT_INPUTS, offers: { ...DEFAULT_INPUTS.offers, oto: { ...DEFAULT_INPUTS.offers.oto, enabled: false } } };
+  assert.ok(growthLevers(off, { limit: 5 }).some((l) => l.key === 'addOffer'));
+  const strong = { ...DEFAULT_INPUTS, conversionRate: 0.04 };
+  assert.ok(!growthLevers(strong, { limit: 5 }).some((l) => l.key === 'conversionExpected'));
 });
 
 /* ---------- Validation ---------- */

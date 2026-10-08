@@ -6,6 +6,20 @@ All builds follow [semantic versioning](https://semver.org). The version lives i
 - **ENGINE_VERSION**: the calculation rules. Bump whenever a formula changes.
 - **DATA_SCHEMA**: the shape of saved data. Bump when the saved format changes.
 
+## [0.8.0] - 2026-10-08
+### Changed
+- **New users open to a profit.** Example traffic values updated so the first screen is encouraging and still realistic: 75,000 social reach and $0.75 per click (with $300/month ad spend and 2% click-through). At the Conservative rates the opening screen shows about +$282 a month; offers at Expected roughly double it.
+- Loss message reworded to point forward: "At these numbers the funnel doesn't cover its costs yet. The ideas under Ways to grow show what changes that."
+### Added
+- **Ways to grow** panel at the top of the results: up to three next moves (offers to Expected, conversion to Expected, add an offer that is off, more social reach), each with its estimated monthly profit gain, order value gain, and a **Try it** button that applies it. Shown whether the funnel is in profit or not.
+- Engine 3.1.0: `growthLevers()` and 4 new tests (56 total), including one that checks a new user opens to a profit.
+
+## [0.7.1] - 2026-10-08
+### Changed
+- Default ad spend is now **$300 a month ($10 a day)**, an example the customer replaces. The ad spend field shows the daily amount ("About $10.00 a day").
+- Cost per click and social click-through stay as example values, with no presets (decided with Malissa).
+- Engine 3.0.1: default ad spend only; no formula changes.
+
 ## [0.7.0] - 2026-10-08
 ### Added
 - **Traffic from ads and social reach.** Section 1 now asks where visitors come from: ad spend ÷ cost per click (paid) plus social reach × click-through (organic). Shows a live summary, e.g. "About 1,500 visitors from ads + 500 from social = 2,000 visitors a month", and what each buyer from ads costs in clicks (cost per click ÷ conversion). Customers who know their traffic can switch to "I know my monthly visitors".

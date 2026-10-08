@@ -54,8 +54,8 @@ export const DEFAULT_INPUTS = deepFreeze({
   // Traffic: 'sources' builds visitors from ads + social reach; 'direct' uses `visitors` as entered.
   trafficMode: 'sources',
   visitors: 5000,
-  costPerClick: 1, // example only: the customer replaces it with their own
-  socialReach: 25000, // example only
+  costPerClick: 0.75, // example only: the customer replaces it with their own
+  socialReach: 75000, // example only
   socialClickRate: 0.02, // example only
   conversionRate: PLANNING_RANGES.main.conservative,
   fulfillmentCost: 0,
@@ -66,7 +66,7 @@ export const DEFAULT_INPUTS = deepFreeze({
     downsell: { enabled: true, name: '', price: 47, rate: PLANNING_RANGES.downsell.conservative, fulfillmentCost: 0 },
     oto: { enabled: true, name: '', price: 297, rate: PLANNING_RANGES.oto.conservative, fulfillmentCost: 0, reachRate: 1 },
   },
-  adSpend: 1500,
+  adSpend: 300, // example: $10 a day
   processingPct: 0.029,
   processingFixed: 0.3,
   refundRate: 0.03,
@@ -479,6 +479,59 @@ export function defaultScenarios(inputs) {
 /** Compare scenarios without re-entering inputs. */
 export function compareScenarios(base = {}, overrides = defaultScenarios(base)) {
   return Object.fromEntries(Object.entries(overrides).map(([name, o]) => [name, calculate(applyOverrides(base, o))]));
+}
+
+/* ---------- Ways to grow: the next moves and what each adds ---------- */
+
+/**
+ * Small, concrete changes and their effect on monthly profit and AOV at the
+ * customer's current numbers. Only improvements are returned, best first.
+ * Each lever carries the `change` to apply, so the page can offer "Try it".
+ */
+export function growthLevers(raw = {}, { limit = 3 } = {}) {
+  const now = calculate(raw);
+  if (!now.ok) return [];
+  const i = now.inputs;
+  const levers = [];
+  const test = (key, title, detail, change) => {
+    const merged = { ...raw, ...change, offers: { ...(raw.offers || {}) } };
+    for (const k of OFFER_KEYS) merged.offers[k] = { ...(raw.offers?.[k] || {}), ...(change.offers?.[k] || {}) };
+    const r = calculate(merged);
+    if (!r.ok) return;
+    const profitDelta = r.results.operatingProfit - now.results.operatingProfit;
+    const aovDelta = r.results.aov - now.results.aov;
+    if (profitDelta > 0.005) levers.push({ key, title, detail, change, profitDelta, aovDelta, profitAfter: r.results.operatingProfit });
+  };
+
+  // 1. Offers at the Expected take rates
+  const offerChange = {};
+  for (const k of OFFER_KEYS) {
+    if (i.offers[k].active && i.offers[k].rate < PLANNING_RANGES[k].expected) offerChange[k] = { rate: PLANNING_RANGES[k].expected };
+  }
+  if (Object.keys(offerChange).length) {
+    test('offersExpected', 'Get your offers to the Expected take rates', 'Better offer pages and a clear reason to say yes lift every step.', { offers: offerChange });
+  }
+
+  // 2. Main product conversion at Expected
+  if (i.conversionRate < PLANNING_RANGES.main.expected) {
+    test('conversionExpected', `Lift your sales page to a ${+(PLANNING_RANGES.main.expected * 100).toFixed(2)}% conversion rate`,
+      'Clearer promise, proof and a simple checkout help more visitors buy.', { conversionRate: PLANNING_RANGES.main.expected });
+  }
+
+  // 3. Turn on an offer that is off
+  const off = OFFER_KEYS.find((k) => !i.offers[k].enabled && (k !== 'downsell' || i.offers.upsell.enabled));
+  if (off) {
+    test('addOffer', `Add your ${OFFER_LABELS[off].toLowerCase()}`, 'Another way for buyers to get more of your help.', { offers: { [off]: { enabled: true } } });
+  }
+
+  // 4. More social reach
+  if (i.trafficMode === 'sources') {
+    const more = Math.max(5000, Math.round((i.socialReach * 0.25) / 5000) * 5000);
+    test('moreReach', `Reach ${more.toLocaleString('en-US')} more people on social each month`,
+      'Consistent posting brings visitors without extra ad spend.', { socialReach: i.socialReach + more });
+  }
+
+  return levers.sort((a, b) => b.profitDelta - a.profitDelta).slice(0, limit);
 }
 
 /* ---------- Take rates from a seller's own sales data ---------- */
