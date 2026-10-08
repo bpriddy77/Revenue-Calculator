@@ -1,11 +1,11 @@
 # DP-002 — Authority Funnel Revenue Calculator
 
-**Version 0.6.0** (calculation engine 2.3.0, data schema 3). See `CHANGELOG.md`.
+**Version 0.7.0** (calculation engine 3.0.0, data schema 4). See `CHANGELOG.md`.
 
 Helps coaches, consultants and service providers plan an authority funnel: five evergreen digital products (main product, order bump, upsell, downsell, one-time offer) that showcase their expertise and lead buyers toward bigger one-on-one work. Models how the five work together on average order value (AOV), revenue and profit. Dependency-free; runs in the browser and on the server.
 
 ```bash
-npm test        # 45 tests, Node 18+
+npm test        # 52 tests, Node 18+
 ```
 
 ```js
@@ -54,7 +54,7 @@ Locked with Malissa, 2026-10-08:
 | # | Decision | How the engine handles it |
 |---|----------|---------------------------|
 | 1 | Refunds and fees | Fees are charged on every sale and are **not** returned on refunds. Refunds are occasional, case-by-case events. |
-| 2 | Ad spend in goals | Treated as a **fixed monthly budget**. The profit goal notes that scaling usually takes more ad spend and cost per visitor rises. |
+| 2 | Ad spend in goals | **Ads + social mode (default, v0.7.0):** ad spend grows with the visitors a goal needs, at the customer's cost per click; the note says cost per click usually rises with spend. **Direct visitors mode:** ad spend stays a fixed monthly budget, as before. |
 | 3 | Profit goal | Required buyers = (profit goal + ad spend + operating costs) ÷ contribution per buyer. Unreachable when each buyer loses money, with the reason explained. |
 | 4 | Rounding | Required buyers round **up**; required visitors come from the rounded buyers, also rounded up. Projections stay as decimals. |
 | 5 | Acquisition cost | Labeled **cost per buyer** (blended): ad spend ÷ all initial buyers. |
@@ -71,12 +71,22 @@ Added for the funnel model in v0.3.0 (assumptions, open to change):
 | 11 | **AOV is always shown**, even with zero buyers, because it comes from acceptance rates. | Lets customers design order value before they have traffic. |
 | 12 | Default scenarios are **½×, 1× and 1½×** the customer's conversion and acceptance rates, capped at 100%. | Each scenario is fully editable. |
 
+## Traffic model (v0.7.0)
+
+| Mode | Visitors | Notes |
+|---|---|---|
+| Ads + social reach (default) | ad spend ÷ cost per click + social reach × click-through | Cost per click, reach and click-through are example values the customer replaces. No presets. |
+| I know my monthly visitors | entered directly | Ad spend is still counted as a cost. |
+
+In ads + social mode the profit goal solves for buyers with ad spend growing alongside paid visitors: profit = buyers × contribution − (visitors needed − social visitors) × cost per click − operating costs. When contribution per buyer is below cost per click ÷ conversion, more ads can't reach the goal and the page says why.
+
 ## Take rates: scenarios and sales data
 
 **Scenario take rates** (`src/guidance.js`). Illustrative planning assumptions, not verified industry benchmarks or predictions. Never describe them as established statistics.
 
 | Offer | Conservative (default) | Expected | Stretch |
 |---|---|---|---|
+| Main product conversion | 1% | 2% | 4% |
 | Order bump | 10% | 20% | 35% |
 | Upsell | 3% | 6% | 15% |
 | Downsell | 2% | 4% | 8% |

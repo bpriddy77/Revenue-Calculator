@@ -51,8 +51,13 @@ const deepFreeze = (o) => {
 export const DEFAULT_INPUTS = deepFreeze({
   productName: 'My First Digital Product',
   price: 27,
+  // Traffic: 'sources' builds visitors from ads + social reach; 'direct' uses `visitors` as entered.
+  trafficMode: 'sources',
   visitors: 5000,
-  conversionRate: 0.02,
+  costPerClick: 1, // example only: the customer replaces it with their own
+  socialReach: 25000, // example only
+  socialClickRate: 0.02, // example only
+  conversionRate: PLANNING_RANGES.main.conservative,
   fulfillmentCost: 0,
   offers: {
     // New sellers start at the Conservative scenario rate (see guidance.js).
@@ -92,6 +97,9 @@ const TOP_FIELDS = {
   revenueGoal: { label: 'Monthly revenue goal', goal: true },
   profitGoal: { label: 'Monthly profit goal', goal: true },
   aovGoal: { label: 'Target AOV', goal: true },
+  costPerClick: { label: 'Cost per click' },
+  socialReach: { label: 'Monthly social reach' },
+  socialClickRate: { label: 'Click-through rate', rate: true },
 };
 
 const OFFER_FIELDS = {
@@ -144,6 +152,11 @@ export function validateInputs(raw = {}) {
       if (error && offer.enabled) errors[`offers.${k}.${field}`] = error;
     }
     inputs.offers[k] = offer;
+  }
+
+  inputs.trafficMode = merged.trafficMode === 'direct' ? 'direct' : 'sources';
+  if (inputs.trafficMode === 'sources' && inputs.adSpend > 0 && !(inputs.costPerClick > 0) && !errors.costPerClick) {
+    errors.costPerClick = 'Cost per click must be more than $0 when you have ad spend.';
   }
 
   // A downsell only exists for buyers who decline an upsell.
@@ -230,6 +243,15 @@ export function calculate(raw = {}) {
 
   const notes = {};
   const u = perBuyer(i);
+
+  // Traffic: from ads and social reach, or entered directly.
+  const sources = i.trafficMode === 'sources';
+  let paidVisitors = 0, organicVisitors = 0;
+  if (sources) {
+    paidVisitors = i.adSpend > 0 ? i.adSpend / i.costPerClick : 0;
+    organicVisitors = i.socialReach * i.socialClickRate;
+    i.visitors = paidVisitors + organicVisitors;
+  }
   const buyers = i.visitors * i.conversionRate;
 
   // Itemized offers
@@ -329,7 +351,55 @@ export function calculate(raw = {}) {
       'Each buyer loses money after refunds, fees and fulfillment, so more buyers make the loss bigger. ' +
       'Raise prices or lower per-sale costs to make this goal reachable.',
   });
-  if (profitGoal) profitGoal.notes.adSpend = adSpendNote;
+  if (profitGoal && !sources) profitGoal.notes.adSpend = adSpendNote;
+
+  // With traffic from ads + social, more visitors means more ad spend. Work out what each goal needs.
+  if (sources) {
+    const cpc = i.costPerClick;
+    const conv = i.conversionRate;
+    const cpcNote = `Assumes ${formatMoney(cpc)} per click and the same social reach. Cost per click usually rises as you spend more on ads.`;
+    const adFor = (visitorsNeeded) => Math.max(0, visitorsNeeded - organicVisitors) * cpc;
+
+    if (revenueGoal && revenueGoal.reachable && revenueGoal.requiredVisitors !== null) {
+      revenueGoal.requiredAdSpend = adFor(revenueGoal.requiredVisitors);
+      revenueGoal.additionalAdSpend = Math.max(0, revenueGoal.requiredAdSpend - i.adSpend);
+      revenueGoal.notes.adSpend = cpcNote;
+    }
+
+    if (profitGoal && conv > 0 && u.contribution > 0) {
+      // Profit = buyers × contribution − ad spend − fixed costs, where ad spend grows with paid visitors.
+      const G = i.profitGoal, F = i.fixedCosts, c = u.contribution;
+      const organicBuyers = organicVisitors * conv;
+      let B = null;
+      const bOrganic = (G + F) / c; // enough from social reach alone, no ads needed
+      if (G + F <= 0) B = 0;
+      else if (bOrganic <= organicBuyers + 1e-9) B = bOrganic;
+      else if (c - cpc / conv > 0) B = (G + F - organicVisitors * cpc) / (c - cpc / conv);
+      if (B === null) {
+        Object.assign(profitGoal, { reachable: false, requiredBuyers: null, requiredVisitors: null, additionalVisitors: null, requiredConversionRate: null });
+        profitGoal.notes = {
+          requiredBuyers:
+            `Each buyer from ads costs ${formatMoney(cpc / conv)} in clicks but brings in only ${formatMoney(c)} after refunds, fees and delivery, ` +
+            'so more ad spend makes the gap bigger. Lower your cost per click, raise prices or improve conversion to make this goal reachable.',
+        };
+      } else {
+        const buyersNeeded = ceilSafe(B);
+        const visitorsNeeded = ceilSafe(buyersNeeded / conv);
+        Object.assign(profitGoal, {
+          reachable: true,
+          requiredBuyers: buyersNeeded,
+          requiredVisitors: visitorsNeeded,
+          additionalVisitors: Math.max(0, visitorsNeeded - i.visitors),
+          requiredAdSpend: adFor(visitorsNeeded),
+        });
+        profitGoal.additionalAdSpend = Math.max(0, profitGoal.requiredAdSpend - i.adSpend);
+        profitGoal.requiredConversionRate = null;
+        profitGoal.notes = { adSpend: cpcNote };
+      }
+    } else if (profitGoal) {
+      profitGoal.notes.adSpend = adSpendNote;
+    }
+  }
 
   let aovGoal = null;
   if (i.aovGoal !== null) {
@@ -366,6 +436,11 @@ export function calculate(raw = {}) {
       totalOfferValue: maxCheckoutValue, // same figure, customer-facing name: total available offer value
       mainPrice: i.price,
       revenuePerVisitor,
+      trafficMode: i.trafficMode,
+      visitors: i.visitors,
+      paidVisitors,
+      organicVisitors,
+      paidCostPerBuyer: sources && i.conversionRate > 0 && i.adSpend > 0 ? i.costPerClick / i.conversionRate : null,
       cac,
       roas,
       breakEvenCac,
@@ -386,9 +461,9 @@ function applyOverrides(base, o = {}) {
 }
 
 /**
- * Initial scenarios: the customer's own traffic and front-end conversion in all
- * three, with offer acceptance rates from the Conservative / Expected / Stretch
- * planning assumptions (guidance.js). Every value is editable afterwards.
+ * Initial scenarios: the customer's own traffic and ad spend in all three, with
+ * front-end conversion and offer acceptance rates from the Conservative /
+ * Expected / Stretch planning assumptions (guidance.js). Every value is editable.
  */
 export const SCENARIO_KEYS = Object.freeze(['conservative', 'expected', 'stretch']);
 export function defaultScenarios(inputs) {
@@ -396,7 +471,7 @@ export function defaultScenarios(inputs) {
   const build = (band) => {
     const offers = {};
     for (const k of OFFER_KEYS) offers[k] = { rate: PLANNING_RANGES[k][band] };
-    return { visitors: toNumber(i.visitors), conversionRate: toNumber(i.conversionRate), offers };
+    return { visitors: toNumber(i.visitors), adSpend: toNumber(i.adSpend), conversionRate: PLANNING_RANGES.main[band], offers };
   };
   return Object.fromEntries(SCENARIO_KEYS.map((b) => [b, build(b)]));
 }
@@ -510,6 +585,11 @@ export const DEFINITIONS = Object.freeze({
   contributionProfit: 'What is left after refunds, per-sale costs and ad spend. It pays for your fixed costs.',
   operatingProfit: 'Your estimated monthly profit after every cost you entered. Taxes are not included.',
   revenuePerVisitor: 'What each visitor to your sales page is worth on average, after refunds.',
+  paidCostPerBuyer: 'Ad cost to win one buyer from paid traffic: your cost per click divided by your conversion rate.',
+  costPerClick: 'What you pay each time someone clicks your ad and lands on your sales page.',
+  socialReach: 'How many people see your posts in a month. Your platform insights show this.',
+  socialClickRate: 'Of the people who see your posts, the share who click through to your sales page.',
+  conversionRate: 'Of the people who visit your sales page, the share who buy your main product.',
   cac: 'Ad spend divided by all buyers. If some buyers found you without ads, your true paid cost per buyer is higher.',
   roas: 'Return on ad spend: funnel revenue before refunds for every $1 of ads.',
   breakEvenCac: 'The most you can spend to win one buyer before that buyer stops being profitable.',

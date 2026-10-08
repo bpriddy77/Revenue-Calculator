@@ -12,6 +12,8 @@ export const RANGE_KEYS = Object.freeze(['conservative', 'expected', 'stretch'])
 export const RANGE_LABELS = Object.freeze({ conservative: 'Conservative', expected: 'Expected', stretch: 'Stretch' });
 
 export const PLANNING_RANGES = Object.freeze({
+  // Front-end conversion (sales page visitors who buy the main product). From the DP-002 brief's scenario example.
+  main: Object.freeze({ conservative: 0.01, expected: 0.02, stretch: 0.04 }),
   bump: Object.freeze({ conservative: 0.10, expected: 0.20, stretch: 0.35 }),
   upsell: Object.freeze({ conservative: 0.03, expected: 0.06, stretch: 0.15 }),
   downsell: Object.freeze({ conservative: 0.02, expected: 0.04, stretch: 0.08 }),
@@ -38,9 +40,10 @@ export function describeRate(offerKey, rate) {
 }
 
 /** Which scenario, if any, every offer's rate currently matches. */
-export function matchingScenario(rates) {
+export const OFFER_RANGE_KEYS = Object.freeze(['bump', 'upsell', 'downsell', 'oto']);
+export function matchingScenario(rates, keys = OFFER_RANGE_KEYS) {
   for (const b of RANGE_KEYS) {
-    if (Object.keys(PLANNING_RANGES).every((k) => typeof rates[k] === 'number' && near(rates[k], PLANNING_RANGES[k][b]))) return b;
+    if (keys.every((k) => typeof rates[k] === 'number' && near(rates[k], PLANNING_RANGES[k][b]))) return b;
   }
   return null;
 }

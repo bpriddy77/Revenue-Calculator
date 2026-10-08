@@ -6,6 +6,22 @@ All builds follow [semantic versioning](https://semver.org). The version lives i
 - **ENGINE_VERSION**: the calculation rules. Bump whenever a formula changes.
 - **DATA_SCHEMA**: the shape of saved data. Bump when the saved format changes.
 
+## [0.7.0] - 2026-10-08
+### Added
+- **Traffic from ads and social reach.** Section 1 now asks where visitors come from: ad spend ÷ cost per click (paid) plus social reach × click-through (organic). Shows a live summary, e.g. "About 1,500 visitors from ads + 500 from social = 2,000 visitors a month", and what each buyer from ads costs in clicks (cost per click ÷ conversion). Customers who know their traffic can switch to "I know my monthly visitors".
+- **Conversion rate switch** in Section 1: Conservative 1% / Expected 2% / Stretch 4% (from the DP-002 brief's scenario example) or **My sales data** (sales page visitors and buyers → actual conversion rate). Same wording and "illustrative planning assumptions" label as the offers, with tick marks and a live note under the slider.
+- Beginner explanations with examples for traffic sources, cost per click, social reach, click-through and conversion rate.
+- **Goals account for ad spend.** In ads + social mode, revenue and profit goals show the monthly ad spend they would take at the customer's cost per click. The profit goal now includes the extra ad spend, and explains when a goal can't be reached because each buyer from ads costs more in clicks than they bring in.
+- Scenario comparison: ad spend replaces visitors in ads + social mode; initial scenarios also use the Conservative / Expected / Stretch conversion rates.
+- Report includes the traffic breakdown and conversion rate.
+### Changed
+- Ad spend moved to Section 1, where it drives traffic; Costs shows it read-only.
+- Main product data moved from the offers sales-data table to Section 1.
+- Engine 3.0.0 (traffic model, goal math in ads + social mode). 52 tests.
+- Cost per click ($1.00), social reach (25,000) and click-through (2%) are example values only, with no scenario presets.
+### Data schema 4
+- Older saves are migrated and keep the visitors they entered ("I know my monthly visitors").
+
 ## [0.6.0] - 2026-10-08
 ### Changed
 - **No product name required.** The calculator starts with "My First Digital Product", which customers can edit; results, sliders, saving and the report work immediately. A blank name never blocks anything. (The v0.3.1 name gate is removed.)

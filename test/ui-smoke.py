@@ -37,7 +37,7 @@ async def main():
             await pg.mouse.click(box['x'] + box['width'] * frac, box['y'] + box['height'] / 2)
             await pg.wait_for_timeout(600)
 
-        for sel, out in [('#r-price', '#o-aov'), ('#r-visitors', '#o-buyers'), ('#r-conversionRate', '#o-buyers'),
+        for sel, out in [('#r-price', '#o-aov'), ('#r-adSpend', '#o-buyers'), ('#r-socialReach', '#o-buyers'), ('#r-conversionRate', '#o-buyers'),
                          ('#r-bump-rate', '#o-aov'), ('#r-upsell-rate', '#o-aov'), ('#r-downsell-rate', '#o-aov'), ('#r-oto-rate', '#o-aov')]:
             before = await txt(out); await slide(sel, 0.85); after = await txt(out)
             check(before != after, f'{sel} updates {out} ({before} -> {after})')
@@ -46,11 +46,23 @@ async def main():
         check(before != await txt('#o-aov'), 'offer toggle updates AOV')
         before = await txt('#o-profit'); await pg.fill('#f-adSpend', '2500'); await pg.wait_for_timeout(600)
         check(before != await txt('#o-profit'), 'typing updates profit')
+        # Conversion scenario switch and main sales data
+        await pg.click('#mainSeg .seg-btn[data-mode=stretch]'); await pg.wait_for_timeout(300)
+        check(await pg.input_value('#f-conversionRate') == '4', 'Stretch conversion sets 4%')
+        await pg.click('#mainSeg .seg-btn[data-mode=data]'); await pg.wait_for_timeout(300)
+        await pg.fill('#sd-main-viewed', '1200'); await pg.fill('#sd-main-purchased', '18'); await pg.wait_for_timeout(400)
+        check(await pg.input_value('#f-conversionRate') == '1.5', 'main sales data sets conversion to 1.5%')
+        # Traffic modes
+        check('from ads' in await txt('#trafficSum'), 'traffic built from ads + social by default')
+        await pg.click('#trafficSeg .seg-btn[data-traffic=direct]'); await pg.wait_for_timeout(300)
+        check('entered directly' in await txt('#trafficSum'), 'direct visitors mode')
+        await pg.click('#trafficSeg .seg-btn[data-traffic=sources]'); await pg.wait_for_timeout(300)
+
         # Scenario switch and sales-data mode
-        await pg.click('.seg-btn[data-mode=expected]'); await pg.wait_for_timeout(400)
+        await pg.click('#offerSeg .seg-btn[data-mode=expected]'); await pg.wait_for_timeout(400)
         check(await pg.input_value('#f-bump-rate') == '20', 'Expected scenario sets the bump to 20%')
-        await pg.click('.seg-btn[data-mode=data]'); await pg.wait_for_timeout(300)
-        for k, (seen, bought) in {'main': (5000, 100), 'bump': (100, 35), 'upsell': (100, 25), 'downsell': (75, 15), 'oto': (100, 10)}.items():
+        await pg.click('#offerSeg .seg-btn[data-mode=data]'); await pg.wait_for_timeout(300)
+        for k, (seen, bought) in {'bump': (100, 35), 'upsell': (100, 25), 'downsell': (75, 15), 'oto': (100, 10)}.items():
             await pg.fill(f'#sd-{k}-viewed', str(seen)); await pg.fill(f'#sd-{k}-purchased', str(bought))
         await pg.wait_for_timeout(500)
         check(await txt('#sr-downsell') == '20%', 'downsell take rate counts only upsell decliners who saw it (15 of 75)')

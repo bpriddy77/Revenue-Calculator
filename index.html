@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="0.6.0">
+<meta name="app-version" content="0.7.0">
 <title>Authority Funnel Revenue Calculator | Priddy Impact Group</title>
 <meta name="description" content="Map your digital product offers, explore how each purchase contributes to your average order value, and see the numbers behind your revenue goals.">
 <link rel="icon" href="assets/pig-monogram-gold.png">
@@ -246,6 +246,22 @@
   input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 5px color-mix(in oklab, var(--gold) 45%, transparent), 0 2px 8px rgb(0 43 56 / 25%); }
   input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 5px color-mix(in oklab, var(--gold) 45%, transparent); }
   input[type=range]:focus:not(:focus-visible) { outline: none; }
+
+  /* Section 1 sub-sections */
+  .subsec { margin: 20px 0 6px; padding-top: 18px; border-top: 1px solid var(--slate-line); }
+  .subsec-h { margin: 0; font-size: 1rem; font-weight: 600; }
+  .subsec .explain { margin-bottom: 12px; }
+  .seg2 { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 14px; }
+  @media (max-width: 520px) { .seg2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .traffic-panel { margin-bottom: 4px; }
+  .traffic-panel .row2 { align-items: start; }
+  .fhint { display: block; margin-top: 5px; font-size: 0.74rem; line-height: 1.4; color: var(--slate); }
+  .traffic-sum { margin: 4px 0 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--teal-tint); font-size: 0.86rem; line-height: 1.5; }
+  .traffic-sum b { font-weight: 600; }
+  .rates-panel.compact { margin-bottom: 14px; padding: 14px; }
+  .box.readonly { background: var(--mist); border-style: dashed; border-color: var(--slate-line); }
+  .box.readonly output { padding: 12px 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  #mainTicks { margin-top: 0; }
 
   /* Offer explanations */
   .explain { margin: 4px 0 0; font-size: 0.84rem; line-height: 1.5; color: var(--teal); max-width: 34rem; }
@@ -526,17 +542,101 @@
           <input type="range" id="r-price" min="1" max="500" step="1" aria-label="Main product price slider" data-pair="f-price">
           <div class="err" data-err="price"></div>
         </div>
-        <div class="field">
-          <label for="f-visitors">Visitors to your sales page each month</label>
-          <div class="box"><input id="f-visitors" data-field="visitors" inputmode="numeric" data-pair="r-visitors"></div>
-          <input type="range" id="r-visitors" min="0" max="50000" step="100" aria-label="Monthly visitors slider" data-pair="f-visitors">
-          <div class="err" data-err="visitors"></div>
+        <div class="subsec">
+          <h3 class="subsec-h">Where your visitors come from</h3>
+          <p class="explain">Visitors reach your sales page two ways: people who click your <b>ads</b>, and people who find you through your <b>social media</b> posts. <span class="ex">Example: $1,500 in ads at $1.00 a click brings about 1,500 visitors; 25,000 people seeing your posts with 2% clicking through brings 500 more.</span></p>
+          <input type="hidden" id="trafficMode" data-field="trafficMode">
+          <div class="seg seg2" id="trafficSeg" role="group" aria-label="How to enter your traffic">
+            <button type="button" class="seg-btn" data-traffic="sources" aria-pressed="false">Ads + social reach</button>
+            <button type="button" class="seg-btn" data-traffic="direct" aria-pressed="false">I know my monthly visitors</button>
+          </div>
+
+          <div id="sourcesPanel" class="traffic-panel">
+            <div class="row2">
+              <div class="field">
+                <label for="f-adSpend">Ad spend <span class="sub">/ month</span></label>
+                <div class="box"><span>$</span><input id="f-adSpend" data-field="adSpend" inputmode="decimal" data-pair="r-adSpend"></div>
+                <input type="range" id="r-adSpend" min="0" max="10000" step="50" aria-label="Monthly ad spend slider" data-pair="f-adSpend">
+                <div class="err" data-err="adSpend"></div>
+              </div>
+              <div class="field">
+                <label for="f-costPerClick">Cost per click</label>
+                <div class="box"><span>$</span><input id="f-costPerClick" data-field="costPerClick" inputmode="decimal"></div>
+                <small class="fhint">What you pay each time someone clicks your ad. Your ad manager shows this.</small>
+                <div class="err" data-err="costPerClick"></div>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label for="f-socialReach">Social reach <span class="sub">/ month</span></label>
+                <div class="box"><input id="f-socialReach" data-field="socialReach" inputmode="numeric" data-pair="r-socialReach"></div>
+                <input type="range" id="r-socialReach" min="0" max="200000" step="1000" aria-label="Monthly social reach slider" data-pair="f-socialReach">
+                <small class="fhint">How many people see your posts in a month. Check your platform insights.</small>
+                <div class="err" data-err="socialReach"></div>
+              </div>
+              <div class="field">
+                <label for="f-socialClickRate">Who click through</label>
+                <div class="box"><input id="f-socialClickRate" data-field="socialClickRate" data-pct inputmode="decimal"><span class="after">%</span></div>
+                <small class="fhint">Of the people who see your posts, how many visit your sales page.</small>
+                <div class="err" data-err="socialClickRate"></div>
+              </div>
+            </div>
+            <p class="note">Cost per click, reach and click-through start as examples. Replace them with your own numbers. Cost per click usually rises as you spend more on ads.</p>
+          </div>
+
+          <div id="directPanel" class="traffic-panel" hidden>
+            <div class="field">
+              <label for="f-visitors">Visitors to your sales page each month</label>
+              <div class="box"><input id="f-visitors" data-field="visitors" inputmode="numeric" data-pair="r-visitors"></div>
+              <input type="range" id="r-visitors" min="0" max="50000" step="100" aria-label="Monthly visitors slider" data-pair="f-visitors">
+              <div class="err" data-err="visitors"></div>
+            </div>
+            <div class="field" id="directAdField">
+              <label for="f-adSpend2">Ad spend <span class="sub">/ month, counted as a cost</span></label>
+              <div class="box"><span>$</span><input id="f-adSpend2" inputmode="decimal" data-mirror="f-adSpend"></div>
+            </div>
+          </div>
+          <p class="traffic-sum" id="trafficSum" role="status"></p>
         </div>
-        <div class="field">
-          <label for="f-conversionRate">Visitors who buy the main product</label>
-          <div class="box"><input id="f-conversionRate" data-field="conversionRate" data-pct inputmode="decimal" data-pair="r-conversionRate"><span class="after">%</span></div>
-          <input type="range" id="r-conversionRate" min="0" max="10" step="0.1" aria-label="Conversion rate slider" data-pair="f-conversionRate">
-          <div class="err" data-err="conversionRate"></div>
+
+        <div class="subsec">
+          <h3 class="subsec-h">How many visitors buy</h3>
+          <p class="explain">Your <b>conversion rate</b> is the share of sales page visitors who buy your main product. <span class="ex">Example: if 1,000 people visit and 10 buy, your conversion rate is 1%.</span></p>
+          <div class="rates-panel compact">
+            <p class="rates-intro"><b>Not sure what percentage to enter?</b> Start with our conservative planning scenario. Once you have actual sales data, replace these assumptions with your own results.</p>
+            <input type="hidden" id="mainMode" data-field="ui.mainMode">
+            <div class="seg" id="mainSeg" role="group" aria-label="Conversion rate for your main product">
+              <button type="button" class="seg-btn" data-mode="conservative" aria-pressed="false">Conservative</button>
+              <button type="button" class="seg-btn" data-mode="expected" aria-pressed="false">Expected</button>
+              <button type="button" class="seg-btn" data-mode="stretch" aria-pressed="false">Stretch</button>
+              <button type="button" class="seg-btn data" data-mode="data" aria-pressed="false">My sales data</button>
+            </div>
+            <p class="seg-status" id="mainStatus" role="status"></p>
+            <p class="assume" id="mainAssume"></p>
+            <div class="sales" id="mainSales" hidden>
+              <p class="sales-intro">From any recent period, enter how many people <b>visited</b> your sales page and how many <b>bought</b>.</p>
+              <div class="row2">
+                <div class="field">
+                  <label for="sd-main-viewed">Sales page visitors</label>
+                  <div class="box"><input id="sd-main-viewed" data-field="sales.main.viewed" inputmode="numeric" placeholder="e.g. 1200"></div>
+                </div>
+                <div class="field">
+                  <label for="sd-main-purchased">Buyers</label>
+                  <div class="box"><input id="sd-main-purchased" data-field="sales.main.purchased" inputmode="numeric" placeholder="e.g. 18"></div>
+                </div>
+              </div>
+              <p class="note" id="sm-main"></p>
+              <span id="sr-main" hidden></span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-conversionRate">Visitors who buy the main product</label>
+            <div class="box"><input id="f-conversionRate" data-field="conversionRate" data-pct inputmode="decimal" data-pair="r-conversionRate"><span class="after">%</span></div>
+            <input type="range" id="r-conversionRate" min="0" max="10" step="0.1" aria-label="Conversion rate slider" data-pair="f-conversionRate" style="margin-bottom:0">
+            <div class="ticks" id="mainTicks" aria-hidden="true"></div>
+            <p class="g-status" id="gs-main"></p>
+            <div class="err" data-err="conversionRate"></div>
+          </div>
         </div>
         <details class="more">
           <summary>Cost to deliver each sale</summary>
@@ -566,7 +666,7 @@
         </figure>
         <div class="rates-panel">
           <p class="rates-intro"><b>Not sure what percentage to enter?</b> Start with our conservative planning scenario. Once you have actual sales data, replace these assumptions with your own results.</p>
-          <div class="seg" role="group" aria-label="Take rates for every offer">
+          <div class="seg" id="offerSeg" role="group" aria-label="Take rates for every offer">
             <button type="button" class="seg-btn" data-mode="conservative" aria-pressed="false">Conservative</button>
             <button type="button" class="seg-btn" data-mode="expected" aria-pressed="false">Expected</button>
             <button type="button" class="seg-btn" data-mode="stretch" aria-pressed="false">Stretch</button>
@@ -579,7 +679,7 @@
           <div class="sales" id="salesPanel" hidden>
             <p class="sales-intro">Enter how many people <b>saw</b> each offer and how many <b>bought</b> it, using the same time period for every row (for example, the last 30 days). Your actual take rates replace the assumptions as you type.</p>
             <div class="sales-wrap"><table class="sales-t" id="salesTable"></table></div>
-            <p class="note">The downsell take rate counts only people who declined the upsell and were shown the downsell. The one-time offer's reach comes from how many of your buyers saw it.</p>
+            <p class="note">The downsell take rate counts only people who declined the upsell and were shown the downsell. Enter your main product's visitors and buyers in Section 1 too: they are used to check these numbers and to work out how many buyers reach the one-time offer.</p>
           </div>
         </div>
         <div class="flow" id="flow"></div>
@@ -590,9 +690,9 @@
         <p class="hint">What it takes to run the funnel each month.</p>
         <div class="row2">
           <div class="field">
-            <label for="f-adSpend">Ad spend <span class="sub">/ month</span></label>
-            <div class="box"><span>$</span><input id="f-adSpend" data-field="adSpend" inputmode="decimal"></div>
-            <div class="err" data-err="adSpend"></div>
+            <span class="lbl">Ad spend <span class="sub">/ month</span></span>
+            <div class="box readonly"><span>$</span><output id="costAd"></output></div>
+            <small class="fhint">Set in Section 1, where it brings in visitors.</small>
           </div>
           <div class="field">
             <label for="f-fixedCosts">Operating costs <span class="sub">/ month</span></label>
@@ -716,6 +816,7 @@
             <p class="away" data-k="away"></p>
             <p class="lever" data-k="lever"></p>
             <p class="lever" data-k="lever2"></p>
+            <p class="lever" data-k="lever3"></p>
             <p class="note" data-k="note"></p>
           </div>
         </article>
@@ -727,6 +828,7 @@
             <p class="away" data-k="away"></p>
             <p class="lever" data-k="lever"></p>
             <p class="lever" data-k="lever2"></p>
+            <p class="lever" data-k="lever3"></p>
             <p class="note" data-k="note"></p>
           </div>
         </article>
@@ -792,9 +894,9 @@
 import {
   calculate, compareScenarios, defaultScenarios, takeRatesFromData, DATA_ROWS, DEFAULT_INPUTS, DEFINITIONS, OFFER_KEYS, OFFER_LABELS,
   formatMoney, formatCount,
-} from './src/calc.js?v=0.6.0';
-import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.6.0';
-import { PLANNING_RANGES, RANGE_KEYS, RANGE_LABELS, ASSUMPTION_LABEL, describeRate, matchingScenario } from './src/guidance.js?v=0.6.0';
+} from './src/calc.js?v=0.7.0';
+import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.7.0';
+import { PLANNING_RANGES, RANGE_KEYS, RANGE_LABELS, ASSUMPTION_LABEL, describeRate, matchingScenario } from './src/guidance.js?v=0.7.0';
 
 const $ = (id) => document.getElementById(id);
 const CURRENT_KEY = 'pig-dp002-current';
@@ -1051,7 +1153,7 @@ function renderGoal(id, g, visitors, aovTarget) {
   const root = $(id);
   const set = (k, v) => { root.querySelector(`[data-k="${k}"]`).textContent = v; };
   const ring = root.querySelector('.ring');
-  ['away', 'lever', 'lever2', 'note'].forEach((k) => set(k, ''));
+  ['away', 'lever', 'lever2', 'lever3', 'note'].forEach((k) => set(k, ''));
   if (!g) { root.dataset.state = 'empty'; set('goal', ''); set('pct', '—'); ring.style.setProperty('--p', 0); set('note', 'Enter a goal above to see what it takes.'); return; }
   set('goal', `${money0(g.goal)} a month`);
   if (!g.reachable) { root.dataset.state = 'blocked'; set('pct', '—'); ring.style.setProperty('--p', 0); set('note', g.notes.requiredBuyers); return; }
@@ -1069,6 +1171,10 @@ function renderGoal(id, g, visitors, aovTarget) {
     if (g.requiredBuyersAtTargetAov && g.requiredBuyersAtTargetAov < g.requiredBuyers) {
       set('lever2', `Or raise your order value to ${money0(aovTarget)} and you'd need just ${whole(g.requiredBuyersAtTargetAov)} buyers.`);
     }
+  }
+  if (g.requiredAdSpend !== undefined && !done) {
+    set('lever3', g.requiredAdSpend === 0 ? 'Your social reach alone could bring the visitors this goal needs.'
+      : `In ads, that's about ${money0(g.requiredAdSpend)} a month at your cost per click (${money0(g.additionalAdSpend)} more than now).`);
   }
   set('note', [g.notes.requiredVisitors, g.notes.adSpend].filter(Boolean).join(' '));
 }
@@ -1102,12 +1208,12 @@ function buildScenarioTable(r) {
   const out = [['buyers', 'Initial buyers'], ['aov', 'Average order value'], ['gross', 'Funnel revenue'], ['profit', 'Monthly profit']];
   $('scen').innerHTML =
     `<thead><tr><th></th>${keys.map((k) => `<th${cls(k)}>${SCEN[k]}</th>`).join('')}</tr></thead><tbody>` +
-    row('Visitors', 'visitors', false) + row('Buy main product (%)', 'conversionRate', true) +
+    (trafficMode() === 'sources' ? row('Ad spend ($)', 'adSpend', false) : row('Visitors', 'visitors', false)) + row('Buy main product (%)', 'conversionRate', true) +
     (offerRows ? `<tr class="group"><td colspan="4">Offer acceptance</td></tr>${offerRows}` : '') +
     `<tr class="group"><td colspan="4">Results</td></tr>` +
     out.map(([o, label]) => `<tr class="out"><td>${label}</td>${keys.map((k) => `<td${cls(k)} id="so-${k}-${o}">—</td>`).join('')}</tr>`).join('') +
     '</tbody>';
-  $('scen').dataset.offers = OFFER_KEYS.filter((k) => r.inputs.offers[k].active).join(',');
+  $('scen').dataset.offers = OFFER_KEYS.filter((k) => r.inputs.offers[k].active).join(',') + '|' + trafficMode();
   for (const el of $('scen').querySelectorAll('input')) {
     const v = getPath(scenarios[el.dataset.scen], el.dataset.path);
     el.value = v === undefined ? '' : (el.hasAttribute('data-pct') ? pctToUI(v) : v);
@@ -1137,10 +1243,12 @@ function render() {
   $('t-downsell').disabled = !upOn;
   $('downsellLock').hidden = upOn;
 
-  if (mode() === 'data') applySalesData();
+  if (mode() === 'data' || mainMode() === 'data') applySalesData();
+  syncMirror();
   const raw = readInputs();
   const r = calculate(raw);
   updateSegment();
+  updateMain(r);
   showErrors(r.ok ? {} : r.errors);
   $('o-body').style.opacity = r.ok ? '' : '.35';
   if (!r.ok) {
@@ -1157,7 +1265,7 @@ function render() {
   renderAovGoal(r.goals.aov, r.results.maxCheckoutValue);
 
   if (!scenarios) scenarios = defaultScenarios(r.inputs);
-  const activeNow = OFFER_KEYS.filter((k) => r.inputs.offers[k].active).join(',');
+  const activeNow = OFFER_KEYS.filter((k) => r.inputs.offers[k].active).join(',') + '|' + trafficMode();
   if (!$('scen').querySelector('tbody') || $('scen').dataset.offers !== activeNow) buildScenarioTable(r);
   const s = renderScenarioOutputs(raw);
   last = { r, s };
@@ -1166,15 +1274,17 @@ function render() {
 
 /* ---------- Saved data migration ---------- */
 // Schema 3 (v0.5.0): scenario "optimistic" renamed "stretch"; adds ui.rateMode and sales data.
+// Schema 4 (v0.7.0): traffic from ads + social reach. Older saves keep their entered visitors ("direct").
 function migrate(entry) {
   if (!entry || typeof entry !== 'object') return null;
-  if (entry.schema === DATA_SCHEMA) return entry;
-  if (entry.schema === 2) {
-    const sc = entry.scenarios ? { ...entry.scenarios } : null;
+  let e = entry;
+  if (e.schema === 2) {
+    const sc = e.scenarios ? { ...e.scenarios } : null;
     if (sc && sc.optimistic && !sc.stretch) { sc.stretch = sc.optimistic; delete sc.optimistic; }
-    return { ...entry, schema: DATA_SCHEMA, scenarios: sc };
+    e = { ...e, schema: 3, scenarios: sc };
   }
-  return null;
+  if (e.schema === 3) e = { ...e, schema: 4, values: { ...(e.values || {}), trafficMode: 'direct' } };
+  return e.schema === DATA_SCHEMA ? e : null;
 }
 
 /* ---------- Save & reopen (this browser) ---------- */
@@ -1242,6 +1352,9 @@ function buildReport() {
     </tbody></table>
     <p style="font-size:9pt;color:var(--slate)">Main product price ${money(x.mainPrice)}; projected AOV ${money(x.aov)}; total available offer value ${money(x.totalOfferValue)} (counts the upsell or the downsell, not both).<br>
       Take rates: ${esc($('segStatus').textContent)} ${$('assumeLabel').hidden ? '' : esc(ASSUMPTION_LABEL)}</p>
+    <p style="font-size:9pt;color:var(--slate)">Traffic: ${x.trafficMode === 'sources'
+      ? `${whole(Math.round(x.paidVisitors))} from ads (${money(i.adSpend)} at ${money(i.costPerClick)} per click) + ${whole(Math.round(x.organicVisitors))} from social (${whole(i.socialReach)} reach × ${pct(i.socialClickRate)}) = ${whole(Math.round(x.visitors))} visitors.`
+      : `${whole(Math.round(x.visitors))} visitors a month, entered directly.`} Conversion rate ${pct(i.conversionRate)}.</p>
     <h2>Monthly profit</h2>
     <table><tbody>
       <tr><td>Funnel revenue</td><td>${money(x.grossRevenue)}</td></tr>
@@ -1286,6 +1399,7 @@ document.addEventListener('input', (e) => {
   }
   const target = t.dataset.field || (t.dataset.pair && $(t.dataset.pair).dataset.field) || '';
   if (RATE_FIELD.test(target) && mode() === 'data') $('rateMode').value = 'scenario';
+  if (target === 'conversionRate' && mainMode() === 'data') $('mainMode').value = 'scenario';
   if (t.dataset.pair) {
     const other = $(t.dataset.pair);
     if (t.type === 'range') { other.value = t.value; paintSlider(t); }
@@ -1316,7 +1430,7 @@ document.addEventListener('click', (e) => {
 });
 /* ---------- Take rates: scenario switch and sales data ---------- */
 const mode = () => $('rateMode').value || 'scenario';
-const RATE_FIELD = /^(conversionRate|offers\.(bump|upsell|downsell|oto)\.rate|offers\.oto\.reachRate)$/;
+const RATE_FIELD = /^(offers\.(bump|upsell|downsell|oto)\.rate|offers\.oto\.reachRate)$/;
 const ROW_LABEL = {
   main: ['Main product', 'Sales page visitors and buyers'],
   bump: ['Order bump', 'Shown at checkout'],
@@ -1326,7 +1440,7 @@ const ROW_LABEL = {
 };
 function buildSalesTable() {
   $('salesTable').innerHTML = '<thead><tr><th>Offer</th><th>Saw it</th><th>Bought</th><th>Take rate</th></tr></thead><tbody>' +
-    DATA_ROWS.map((k) => `<tr><td>${ROW_LABEL[k][0]}<small>${ROW_LABEL[k][1]}</small></td>
+    DATA_ROWS.filter((k) => k !== 'main').map((k) => `<tr><td>${ROW_LABEL[k][0]}<small>${ROW_LABEL[k][1]}</small></td>
       <td><input inputmode="numeric" data-field="sales.${k}.viewed" id="sd-${k}-viewed" aria-label="${ROW_LABEL[k][0]}: how many saw it" placeholder="—"></td>
       <td><input inputmode="numeric" data-field="sales.${k}.purchased" id="sd-${k}-purchased" aria-label="${ROW_LABEL[k][0]}: how many bought" placeholder="—"></td>
       <td class="rate" id="sr-${k}">—</td></tr><tr class="msg"><td colspan="4" id="sm-${k}"></td></tr>`).join('') + '</tbody>';
@@ -1342,31 +1456,99 @@ function applySalesData() {
     const err = t.errors[`${k}.viewed`] || t.errors[`${k}.purchased`];
     $(`sd-${k}-viewed`).classList.toggle('bad', Boolean(t.errors[`${k}.viewed`]));
     $(`sd-${k}-purchased`).classList.toggle('bad', Boolean(t.errors[`${k}.purchased`]));
+    if (k === 'main') {
+      $('sm-main').textContent = err || t.notes.main || (t.rates.main !== null ? `Your actual conversion rate: ${pct(t.rates.main)}.` : '');
+      $('sm-main').classList.toggle('err-msg', Boolean(err));
+      $('sr-main').textContent = t.rates.main === null ? '—' : pct(t.rates.main);
+      if (t.rates.main !== null && mainMode() === 'data') setRateBox('f-conversionRate', t.rates.main);
+      continue;
+    }
     $(`sr-${k}`).textContent = t.rates[k] === null ? '—' : pct(t.rates[k]);
     const m = $(`sm-${k}`); m.textContent = err || t.notes[k] || ''; m.className = err ? 'err-msg' : '';
     if (t.rates[k] === null) continue;
-    if (k === 'main') setRateBox('f-conversionRate', t.rates.main);
-    else setRateBox(`f-${k}-rate`, t.rates[k]);
+    if (k === 'main') { if (mainMode() === 'data') setRateBox('f-conversionRate', t.rates.main); }
+    else if (mode() === 'data') setRateBox(`f-${k}-rate`, t.rates[k]);
   }
-  if (t.reachRate !== null) setRateBox('f-oto-reach', Math.min(1, t.reachRate));
+  if (t.reachRate !== null && mode() === 'data') setRateBox('f-oto-reach', Math.min(1, t.reachRate));
   return t;
 }
 function updateSegment() {
   const rates = {};
   for (const k of OFFER_KEYS) rates[k] = Number($(`f-${k}-rate`).value) / 100;
   const active = mode() === 'data' ? 'data' : matchingScenario(rates);
-  for (const b of document.querySelectorAll('.seg-btn')) b.setAttribute('aria-pressed', String(b.dataset.mode === active));
+  for (const b of document.querySelectorAll('#offerSeg .seg-btn')) b.setAttribute('aria-pressed', String(b.dataset.mode === active));
   $('salesPanel').hidden = mode() !== 'data';
-  const used = mode() === 'data' ? DATA_ROWS.filter((k) => $(`sr-${k}`).textContent !== '—') : [];
+  const used = mode() === 'data' ? DATA_ROWS.filter((k) => k !== 'main' && $(`sr-${k}`).textContent !== '—') : [];
   $('segStatus').textContent =
-    active === 'data' ? (used.length === DATA_ROWS.length ? 'Using your actual take rates from your sales data for every step.'
-      : used.length ? `Using your sales data for: ${used.map((k) => ROW_LABEL[k][0].toLowerCase()).join(', ')}. Other steps keep their current rates.`
+    active === 'data' ? (used.length === OFFER_KEYS.length ? 'Using your actual take rates from your sales data for every offer.'
+      : used.length ? `Using your sales data for: ${used.map((k) => ROW_LABEL[k][0].toLowerCase()).join(', ')}. Other offers keep their current rates.`
       : 'Enter your numbers below to use your actual take rates.')
     : active ? `Every offer is set to the ${RANGE_LABELS[active]} scenario.`
     : 'Custom rates: you have set your own take rates.';
-  $('assumeLabel').hidden = active === 'data' && used.length === OFFER_KEYS.length + 1;
+  $('assumeLabel').hidden = active === 'data' && used.length === OFFER_KEYS.length;
 }
-document.querySelector('.seg').addEventListener('click', (e) => {
+const mainMode = () => $('mainMode').value || 'scenario';
+const trafficMode = () => ($('trafficMode').value === 'direct' ? 'direct' : 'sources');
+function buildMainTicks() {
+  $('mainTicks').innerHTML = RANGE_KEYS.map((b) => `<i class="t-${b}" style="--v:${PLANNING_RANGES.main[b] * 1000}"></i>`).join('');
+}
+function syncMirror() {
+  const m = $('f-adSpend2');
+  if (document.activeElement !== m) m.value = $('f-adSpend').value;
+}
+function updateMain(r) {
+  const conv = Number($('f-conversionRate').value) / 100;
+  const active = mainMode() === 'data' ? 'data' : matchingScenario({ main: conv }, ['main']);
+  for (const b of document.querySelectorAll('#mainSeg .seg-btn')) b.setAttribute('aria-pressed', String(b.dataset.mode === active));
+  $('mainSales').hidden = mainMode() !== 'data';
+  const haveData = $('sr-main').textContent !== '—' && $('sr-main').textContent !== '';
+  $('mainStatus').textContent =
+    active === 'data' ? (haveData ? 'Using your actual conversion rate from your sales data.' : 'Enter your sales page visitors and buyers below.')
+    : active ? `Using the ${RANGE_LABELS[active]} scenario: ${pct(PLANNING_RANGES.main[active])} of visitors buy.`
+    : 'Custom conversion rate: you have set your own.';
+  $('mainAssume').hidden = active === 'data' && haveData;
+  const d = describeRate('main', conv);
+  $('gs-main').textContent = d ? d.message : '';
+  $('gs-main').dataset.band = d ? d.band : '';
+
+  // Traffic panels and summary
+  const tm = trafficMode();
+  for (const b of document.querySelectorAll('#trafficSeg .seg-btn')) b.setAttribute('aria-pressed', String(b.dataset.traffic === tm));
+  $('sourcesPanel').hidden = tm !== 'sources';
+  $('directPanel').hidden = tm !== 'direct';
+  $('costAd').textContent = Number($('f-adSpend').value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (!r || !r.ok) { $('trafficSum').textContent = ''; return; }
+  const x = r.results;
+  if (tm === 'sources') {
+    let line = `About <b>${whole(Math.round(x.paidVisitors))}</b> visitors from ads + <b>${whole(Math.round(x.organicVisitors))}</b> from social = <b>${whole(Math.round(x.visitors))}</b> visitors a month.`;
+    if (x.paidCostPerBuyer !== null) line += ` At this conversion rate, each buyer from ads costs about <b>${money(x.paidCostPerBuyer)}</b> in clicks.`;
+    $('trafficSum').innerHTML = line;
+  } else {
+    $('trafficSum').innerHTML = `<b>${whole(Math.round(x.visitors))}</b> visitors a month, entered directly.`;
+  }
+}
+$('mainSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('.seg-btn');
+  if (!b) return;
+  if (b.dataset.mode === 'data') { $('mainMode').value = 'data'; render(); $('sd-main-viewed').focus(); return; }
+  $('mainMode').value = 'scenario';
+  setRateBox('f-conversionRate', PLANNING_RANGES.main[b.dataset.mode]);
+  render();
+});
+$('trafficSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('.seg-btn');
+  if (!b) return;
+  $('trafficMode').value = b.dataset.traffic;
+  $('scen').innerHTML = '';
+  render();
+});
+$('f-adSpend2').addEventListener('input', (e) => {
+  const v = e.target.value;
+  $('f-adSpend').value = v;
+  const sl = $('r-adSpend'); if (Number.isFinite(Number(v))) { sl.value = v; paintSlider(sl); }
+  render();
+});
+$('offerSeg').addEventListener('click', (e) => {
   const b = e.target.closest('.seg-btn');
   if (!b || b.disabled) return;
   if (b.dataset.mode === 'data') {
@@ -1396,6 +1578,8 @@ if (document.documentElement.classList.contains('embed') && window.parent !== wi
 /* ---------- Start ---------- */
 buildOffers();
 buildSalesTable();
+buildMainTicks();
+$('mainAssume').textContent = ASSUMPTION_LABEL;
 $('assumeLabel').textContent = ASSUMPTION_LABEL;
 let current = null;
 try { current = JSON.parse(localStorage.getItem(CURRENT_KEY) || 'null'); } catch { current = null; }

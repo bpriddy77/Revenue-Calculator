@@ -13,6 +13,9 @@ const offer = (r, key) => r.offers.find((o) => o.key === key);
 // The brief's worked example: $27 main, 100 buyers, 17/35%, 97/25%, 47/20%, 297/10%.
 const base = {
   ...DEFAULT_INPUTS,
+  trafficMode: 'direct', // the example enters 5,000 visitors directly
+  visitors: 5000,
+  conversionRate: 0.02,
   offers: {
     bump: { ...DEFAULT_INPUTS.offers.bump, rate: 0.35 },
     upsell: { ...DEFAULT_INPUTS.offers.upsell, rate: 0.25 },
@@ -271,14 +274,17 @@ test('initial scenarios use the Conservative / Expected / Stretch take rates', (
   assert.deepEqual(Object.keys(sc), ['conservative', 'expected', 'stretch']);
   for (const b of ['conservative', 'expected', 'stretch']) {
     for (const k of OFFER_KEYS) assert.equal(sc[b].offers[k].rate, PLANNING_RANGES[k][b], `${b} ${k}`);
-    assert.equal(sc[b].conversionRate, 0.02, 'keeps the customer conversion');
+    assert.equal(sc[b].conversionRate, PLANNING_RANGES.main[b], 'conversion from the scenario');
     assert.equal(sc[b].visitors, 5000, 'keeps the customer traffic');
+    assert.equal(sc[b].adSpend, 1500, 'keeps the customer ad spend');
   }
   const s = compareScenarios(base);
   close(s.conservative.results.aov, 27 + 17 * 0.10 + 97 * 0.03 + 47 * 0.97 * 0.02 + 297 * 0.02);
   close(s.expected.results.aov, 27 + 17 * 0.20 + 97 * 0.06 + 47 * 0.94 * 0.04 + 297 * 0.05);
   close(s.stretch.results.aov, 27 + 17 * 0.35 + 97 * 0.15 + 47 * 0.85 * 0.08 + 297 * 0.10);
+  close(s.conservative.results.buyers, 50);
   close(s.expected.results.buyers, 100);
+  close(s.stretch.results.buyers, 200);
 });
 
 test('each scenario has independent acceptance rates (any keys work)', () => {
@@ -354,6 +360,61 @@ test('blank, partial, zero and invalid rows', () => {
   assert.match(t.errors['main.purchased'], /whole numbers/);
 });
 
+/* ---------- Traffic from ads and social reach ---------- */
+
+test('default traffic comes from ad spend and social reach', () => {
+  const r = calculate(DEFAULT_INPUTS);
+  close(r.results.paidVisitors, 1500, '$1,500 ÷ $1.00 per click');
+  close(r.results.organicVisitors, 500, '25,000 reach × 2%');
+  close(r.results.visitors, 2000);
+  close(r.results.buyers, 20, '2,000 × 1% conservative conversion');
+  close(r.results.paidCostPerBuyer, 100, '$1.00 per click ÷ 1%');
+});
+
+test('direct mode uses visitors as entered', () => {
+  const r = calculate({ ...DEFAULT_INPUTS, trafficMode: 'direct', visitors: 3000 });
+  close(r.results.visitors, 3000);
+  close(r.results.paidVisitors, 0);
+});
+
+test('cost per click must be above $0 when there is ad spend', () => {
+  assert.ok(calculate({ ...DEFAULT_INPUTS, costPerClick: 0 }).errors.costPerClick);
+  assert.equal(calculate({ ...DEFAULT_INPUTS, costPerClick: 0, adSpend: 0 }).ok, true);
+  close(calculate({ ...DEFAULT_INPUTS, adSpend: 0 }).results.visitors, 500, 'social only');
+});
+
+test('revenue goal shows the ad spend it would take', () => {
+  const g = calculate(DEFAULT_INPUTS).goals.revenue;
+  assert.equal(g.requiredBuyers, 269); // 10,000 ÷ 37.31 retained per buyer
+  assert.equal(g.requiredVisitors, 26900);
+  close(g.requiredAdSpend, (26900 - 500) * 1);
+  close(g.additionalAdSpend, 26400 - 1500);
+  assert.match(g.notes.adSpend, /Cost per click usually rises/);
+});
+
+test('profit goal is unreachable when each paid buyer costs more in clicks than they bring in', () => {
+  const r = calculate(DEFAULT_INPUTS); // $100 of clicks per paid buyer vs ~$35.87 contribution
+  assert.equal(r.goals.profit.reachable, false);
+  assert.match(r.goals.profit.notes.requiredBuyers, /costs \$100\.00 in clicks/);
+});
+
+test('profit goal with growing ad spend: the required ad spend really reaches the goal', () => {
+  const inp = { ...DEFAULT_INPUTS, conversionRate: 0.04, costPerClick: 0.5 };
+  const g = calculate(inp).goals.profit;
+  assert.equal(g.reachable, true);
+  assert.ok(g.requiredAdSpend > 0);
+  const check = calculate({ ...inp, adSpend: g.requiredAdSpend });
+  assert.ok(check.results.operatingProfit >= inp.profitGoal - 1e-6, `profit ${check.results.operatingProfit}`);
+  const less = calculate({ ...inp, adSpend: Math.max(0, g.requiredAdSpend - 60) });
+  assert.ok(less.results.operatingProfit < inp.profitGoal, 'noticeably less ad spend falls short');
+});
+
+test('profit goal reachable from social reach alone needs no ad spend', () => {
+  const g = calculate({ ...DEFAULT_INPUTS, socialReach: 1000000, profitGoal: 1000 }).goals.profit;
+  assert.equal(g.reachable, true);
+  assert.equal(g.requiredAdSpend, 0);
+});
+
 /* ---------- Validation ---------- */
 
 test('validation: invalid percentages, negative prices, missing main price', () => {
@@ -397,6 +458,7 @@ test('scenario rates are ordered Conservative < Expected < Stretch, within 0–1
 test('matchingScenario recognizes a full set of scenario rates', () => {
   assert.equal(matchingScenario({ bump: 0.2, upsell: 0.06, downsell: 0.04, oto: 0.05 }), 'expected');
   assert.equal(matchingScenario({ bump: 0.2, upsell: 0.06, downsell: 0.04, oto: 0.06 }), null);
+  assert.equal(matchingScenario({ main: 0.04 }, ['main']), 'stretch');
 });
 
 test('describeRate places a rate against the ranges', () => {
@@ -408,7 +470,8 @@ test('describeRate places a rate against the ranges', () => {
   assert.equal(describeRate('bump', 0.20).band, 'expected');
   assert.equal(describeRate('bump', 0.35).band, 'stretch');
   assert.equal(describeRate('bump', 0.50).band, 'above');
-  assert.equal(describeRate('main', 0.5), null);
+  assert.equal(describeRate('main', 0.02).band, 'expected');
+  assert.equal(describeRate('nope', 0.5), null);
 });
 
 test('results carry the engine version', () => {
