@@ -1,6 +1,6 @@
 # DP-002 — $100K Funnel Revenue Calculator
 
-**Version 0.3.0** (calculation engine 2.0.0, data schema 2). See `CHANGELOG.md`.
+**Version 0.3.1** (calculation engine 2.0.0, data schema 2). See `CHANGELOG.md`.
 
 Models how a main product, order bump, upsell, downsell and one-time offer work together to raise average order value (AOV), revenue and profit. Dependency-free; runs in the browser and on the server.
 
@@ -78,6 +78,8 @@ Added for the funnel model in v0.3.0 (assumptions, open to change):
 `index.html` is the branded calculator. It imports `src/calc.js` directly, so there is no build step.
 
 On Vercel: Framework Preset **Other**, Build Command **empty**, Output Directory **empty**. If these files sit inside a subfolder of the repo, set Root Directory to that folder.
+
+A product name is required before the page calculates anything; until then sliders, results, goals, scenarios, saving and the report are locked. The engine itself does not require a name, so server-side use is unaffected.
 
 Named saves and the working state live in the visitor's own browser (`localStorage`, keyed by data schema). Account-based saving comes with GHL access control. The report uses the browser's print dialog (Save as PDF), with a dedicated print layout.
 

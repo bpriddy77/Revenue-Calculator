@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="0.3.0">
+<meta name="app-version" content="0.3.1">
 <title>$100K Funnel Revenue Calculator | Priddy Impact Group</title>
 <meta name="description" content="Model how a main product, order bump, upsell, downsell and one-time offer work together to raise your average order value and monthly profit.">
 <link rel="icon" href="assets/pig-monogram-gold.png">
@@ -136,6 +136,30 @@
   details.more[open] summary::after { transform: rotate(45deg); }
   details.more[open] { padding-bottom: 4px; }
   details.more .box { background: var(--white); }
+
+  /* ---------- Product name gate ---------- */
+  .req { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; color: var(--teal-deep); background: var(--gold); vertical-align: 1px; }
+  .name-hint { display: none; align-items: center; gap: 8px; margin: 8px 0 0; font-size: 0.84rem; font-weight: 500; color: var(--gold-dark); }
+  .name-hint .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold) 60%, transparent); animation: beacon 1.8s ease-out infinite; }
+  @keyframes beacon { to { box-shadow: 0 0 0 9px transparent; } }
+  .locked .name-hint { display: flex; }
+  .locked .name-box { border-color: var(--gold); background: color-mix(in oklab, var(--gold) 9%, var(--white)); box-shadow: 0 0 0 4px color-mix(in oklab, var(--gold) 18%, transparent); }
+  input[type=range]:disabled { cursor: not-allowed; opacity: .35; filter: grayscale(1); }
+  input[type=range]:disabled::-webkit-slider-thumb { cursor: not-allowed; }
+  .lockmsg { display: none; }
+  .locked .lockmsg { display: block; padding: 6px 0 4px; }
+  .locked .hero-grid, .locked .hero .warn { display: none; }
+  .lock-title { margin: 0; font-size: 1.35rem; font-weight: 600; color: var(--gold); }
+  .lock-body { margin: 4px 0 16px; font-weight: 300; color: color-mix(in oklab, var(--white) 82%, var(--teal)); max-width: 30rem; }
+  .gated { position: relative; transition: opacity .3s, filter .3s; }
+  .locked .gated { opacity: .45; filter: grayscale(.6); pointer-events: none; user-select: none; }
+  .locked .gated::after {
+    content: 'Add a product name to unlock'; position: absolute; top: 18px; right: 20px;
+    padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 500;
+    color: var(--teal-deep); background: var(--gold-tint); border: 1px solid var(--gold);
+  }
+  .locked .res-body.gated::after { display: none; }
+  @media (max-width: 520px) { .locked .gated::after { position: static; display: inline-block; margin: 0 0 12px; } }
 
   /* ---------- Offer flow ---------- */
   .flow { position: relative; padding-left: 26px; }
@@ -321,6 +345,7 @@
   .btn.solid:hover { background: var(--teal-deep); }
   .btn.gold { background: var(--gold); border-color: var(--gold); color: var(--teal-deep); }
   .btn.gold:hover { background: var(--gold-dark); border-color: var(--gold-dark); color: var(--white); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
   .btn.small { padding: 5px 12px; font-size: 0.8rem; }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 
@@ -348,6 +373,9 @@
   .dock span { display: block; font-weight: 300; font-size: 0.75rem; }
   .dock b { font-weight: 700; font-size: 1.2rem; color: var(--gold); font-variant-numeric: tabular-nums; }
   .dock b.loss { color: var(--loss-soft); }
+  .dock-lock { display: none; grid-column: 1 / -1; color: var(--gold); font-weight: 500; font-size: 0.9rem; }
+  .locked .dock-lock { display: block; }
+  .locked .dock > div:not(.dock-lock) { display: none; }
   @media (min-width: 1000px) { .dock { display: none; } .page { padding-bottom: 24px; } }
 
   /* ---------- GoHighLevel embed (?embed=1) ---------- */
@@ -405,8 +433,9 @@
         <div class="sec-head"><span class="sec-num">1</span><h2 id="s1">Main product</h2></div>
         <p class="hint">The first thing people buy. Every figure starts as an example, so replace it with your own.</p>
         <div class="field">
-          <label for="f-productName">Product name</label>
-          <div class="box"><input id="f-productName" data-field="productName" type="text" placeholder="e.g. Meal Prep Workbook" autocomplete="off"></div>
+          <label for="f-productName">Product name <span class="req">Required</span></label>
+          <div class="box name-box"><input id="f-productName" data-field="productName" type="text" placeholder="e.g. Meal Prep Workbook" autocomplete="off" required aria-required="true" aria-describedby="nameHint"></div>
+          <p class="name-hint" id="nameHint"><span class="dot" aria-hidden="true"></span>Name your product to unlock the sliders and see your results.</p>
         </div>
         <div class="field">
           <label for="f-price">Selling price</label>
@@ -482,6 +511,11 @@
     <section class="card results" aria-labelledby="s4">
       <div class="hero">
         <div class="sec-head hero-head"><span class="sec-num">4</span><h2 id="s4">Your results</h2></div>
+        <div class="lockmsg" id="lockMsg">
+          <p class="lock-title">Start by naming your product</p>
+          <p class="lock-body">Your order value, profit and goals appear here as soon as you do, and update live as you change any number.</p>
+          <button type="button" class="btn gold" id="goName">Add product name</button>
+        </div>
         <div class="hero-grid">
           <div>
             <div class="label">Average order value</div>
@@ -496,7 +530,7 @@
         </div>
         <p class="warn" id="o-lossWarn" hidden>At these numbers the funnel loses money each month. Try higher prices, lower ad spend, or getting more buyers to say yes.</p>
       </div>
-      <div class="res-body" id="o-body">
+      <div class="res-body gated" id="o-body">
         <dl class="kpis">
           <div class="kpi"><dt>Initial buyers</dt><dd id="o-buyers"></dd><div class="why">Main product sales</div></div>
           <div class="kpi"><dt>Funnel revenue</dt><dd id="o-gross"></dd><div class="why">Before refunds</div></div>
@@ -531,7 +565,7 @@
   </div>
 
   <!-- Section 5: goal planner -->
-  <section class="card pad wide" aria-labelledby="s5">
+  <section class="card pad wide gated" aria-labelledby="s5">
     <div class="sec-head"><span class="sec-num">5</span><h2 id="s5">Revenue goal planner</h2></div>
     <p class="hint">Set your targets and see what it takes: more visitors, more of them buying, or a higher order value.</p>
     <div class="goal-inputs">
@@ -590,7 +624,7 @@
   </section>
 
   <!-- Section 6: scenarios -->
-  <section class="card pad wide" aria-labelledby="s6">
+  <section class="card pad wide gated" aria-labelledby="s6">
     <div class="sec-head"><span class="sec-num">6</span><h2 id="s6">Scenario comparison</h2></div>
     <p class="hint">Each version has its own traffic, conversion and acceptance rates. Prices and costs carry over from above.</p>
     <div class="scen-wrap"><table class="scen" id="scen"></table></div>
@@ -628,6 +662,7 @@
 </footer>
 
 <div class="dock" aria-hidden="true">
+  <div class="dock-lock">Name your product to see results</div>
   <div><span>Order value</span><b id="d-aov">—</b></div>
   <div><span>Monthly profit</span><b id="d-profit">—</b></div>
 </div>
@@ -638,8 +673,8 @@
 import {
   calculate, compareScenarios, defaultScenarios, DEFAULT_INPUTS, DEFINITIONS, OFFER_KEYS, OFFER_LABELS,
   formatMoney, formatCount,
-} from './src/calc.js?v=0.3.0';
-import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.3.0';
+} from './src/calc.js?v=0.3.1';
+import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.3.1';
 
 const $ = (id) => document.getElementById(id);
 const CURRENT_KEY = 'pig-dp002-current';
@@ -924,6 +959,20 @@ function render() {
   $('t-downsell').disabled = !upOn;
   $('downsellLock').hidden = upOn;
 
+  // A product name is required before anything is calculated.
+  const named = $('f-productName').value.trim() !== '';
+  document.documentElement.classList.toggle('locked', !named);
+  for (const sl of document.querySelectorAll('input[type=range]')) sl.disabled = !named;
+  for (const id of ['saveBtn', 'reportBtn', 'resetScen']) $(id).disabled = !named;
+  for (const el of document.querySelectorAll('.gated input, .gated button')) el.tabIndex = named ? 0 : -1;
+  if (!named) {
+    for (const id of ['d-aov', 'd-profit']) $(id).textContent = '—';
+    delete shown['o-aov']; delete shown['o-profit'];
+    last = null;
+    try { localStorage.setItem(CURRENT_KEY, JSON.stringify({ schema: DATA_SCHEMA, values: snapshot(), scenarios })); } catch { /* storage unavailable */ }
+    return;
+  }
+
   const raw = readInputs();
   const r = calculate(raw);
   showErrors(r.ok ? {} : r.errors);
@@ -1070,6 +1119,7 @@ $('resetScen').addEventListener('click', () => {
   buildScenarioTable(r);
   render();
 });
+$('goName').addEventListener('click', () => { const f = $('f-productName'); f.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' }); f.focus({ preventScroll: true }); });
 $('chip100k').addEventListener('click', () => { $('f-revenueGoal').value = 8334; render(); });
 
 /* ---------- GoHighLevel embed: report height ---------- */

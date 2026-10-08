@@ -1,6 +1,6 @@
 {
   "name": "dp-002-funnel-revenue-calculator",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "main": "src/calc.js",
   "scripts": { "test": "node --test test/*.test.js" }

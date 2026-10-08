@@ -6,6 +6,17 @@ All builds follow [semantic versioning](https://semver.org). The version lives i
 - **ENGINE_VERSION**: the calculation rules. Bump whenever a formula changes.
 - **DATA_SCHEMA**: the shape of saved data. Bump when the saved format changes.
 
+## [0.3.1] - 2026-10-08
+### Changed
+- A product name is now required before anything is calculated. Until one is entered:
+  - every slider is disabled;
+  - the name field is highlighted in gold with a "Required" tag and a pulsing hint;
+  - the results panel shows "Start by naming your product" with a button that jumps to the field;
+  - the results details, goal planner and scenarios are dimmed with an "Add a product name to unlock" tag;
+  - Save, Download report and Reset scenarios are disabled (opening an already saved funnel still works).
+- A name made only of spaces does not count. Once named, results update live as before.
+- Engine unchanged (2.0.0); this is a page-only change.
+
 ## [0.3.0] - 2026-10-08
 Rebuilt to the **DP-002 $100K Funnel Revenue Calculator** spec, which replaces the single-product calculator.
 ### Engine 2.0.0 (breaking)
