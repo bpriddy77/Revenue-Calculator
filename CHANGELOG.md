@@ -6,6 +6,17 @@ All builds follow [semantic versioning](https://semver.org). The version lives i
 - **ENGINE_VERSION**: the calculation rules. Bump whenever a formula changes.
 - **DATA_SCHEMA**: the shape of saved data. Bump when the saved format changes.
 
+## [0.6.0] - 2026-10-08
+### Changed
+- **No product name required.** The calculator starts with "My First Digital Product", which customers can edit; results, sliders, saving and the report work immediately. A blank name never blocks anything. (The v0.3.1 name gate is removed.)
+- New headline: "Map your digital product offers, explore how each purchase contributes to your average order value, and see the numbers behind your revenue goals."
+### Added
+- **Short explanations where decisions happen.** The main product and every offer card show a one-line beginner-friendly definition and a practical example (order bump, upsell, downsell, one-time offer).
+- **Funnel sequence** at the top of Additional offers: main product → order bump → upsell, or downsell if they say no → one-time offer. Shows live "see it / buy" counts and greys out offers that are off.
+- **Order value comparison** in the results: Main product price, Projected AOV and Total available offer value, with a bar showing where the average sits against the ceiling, the price breakdown, and how much of the available value the average buyer captures. The ceiling counts the upsell or the downsell, whichever is higher, never both.
+- PDF report lists all three order-value figures.
+- Engine 2.3.0: `results.mainPrice` and `results.totalOfferValue`, definitions for each, default product name, 3 new tests (45 total).
+
 ## [0.5.0] - 2026-10-08
 ### Added
 - **Take-rate switch** at the top of the offers section: Conservative, Expected, Stretch or **My sales data**. Conservative is the default for new users. Shows "Custom rates" when a seller sets their own.

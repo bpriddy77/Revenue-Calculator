@@ -49,7 +49,7 @@ const deepFreeze = (o) => {
 
 /** Illustrative defaults only. Never present these as industry benchmarks. */
 export const DEFAULT_INPUTS = deepFreeze({
-  productName: '',
+  productName: 'My First Digital Product',
   price: 27,
   visitors: 5000,
   conversionRate: 0.02,
@@ -363,6 +363,8 @@ export function calculate(raw = {}) {
       operatingProfit,
       aov,
       maxCheckoutValue,
+      totalOfferValue: maxCheckoutValue, // same figure, customer-facing name: total available offer value
+      mainPrice: i.price,
       revenuePerVisitor,
       cac,
       roas,
@@ -497,7 +499,10 @@ export function formatCount(value, locale = 'en-US') {
 export const DEFINITIONS = Object.freeze({
   buyers: 'People who buy the main product: visitors × front-end conversion rate. A decimal is an average, not a partial person.',
   aov: 'Average order value: everything buyers spend across the funnel, divided by the number of buyers. It comes from your acceptance rates, not from assuming everyone buys everything.',
-  maxCheckoutValue: 'The most a single buyer could spend if they said yes at every step. Your AOV is the realistic average; this is the ceiling.',
+  mainPrice: 'What every buyer pays first: the price of your main product.',
+  maxCheckoutValue: 'Total available offer value: the combined price if one buyer says yes to every offer they can see. It counts the upsell or the downsell, whichever is higher, because a buyer takes one or the other, not both.',
+  totalOfferValue: 'Total available offer value: the combined price if one buyer says yes to every offer they can see. It counts the upsell or the downsell, whichever is higher, because a buyer takes one or the other, not both.',
+  aovVsTotal: 'Most buyers will not take every offer. Projected AOV is what the average buyer spends after your take rates; the total available offer value is the ceiling.',
   grossRevenue: 'Everything buyers pay across all offers, before refunds.',
   netRevenue: 'What you keep from sales after refunds, before fees and costs.',
   processingFees: 'Your payment processor’s percentage on all revenue, plus its fixed fee on each charge. The main product and order bump share one charge; each later offer is its own charge. Fees are not returned on refunds.',

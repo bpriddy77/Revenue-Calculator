@@ -1,11 +1,11 @@
 # DP-002 — Authority Funnel Revenue Calculator
 
-**Version 0.5.0** (calculation engine 2.2.0, data schema 3). See `CHANGELOG.md`.
+**Version 0.6.0** (calculation engine 2.3.0, data schema 3). See `CHANGELOG.md`.
 
 Helps coaches, consultants and service providers plan an authority funnel: five evergreen digital products (main product, order bump, upsell, downsell, one-time offer) that showcase their expertise and lead buyers toward bigger one-on-one work. Models how the five work together on average order value (AOV), revenue and profit. Dependency-free; runs in the browser and on the server.
 
 ```bash
-npm test        # 42 tests, Node 18+
+npm test        # 45 tests, Node 18+
 ```
 
 ```js
@@ -39,7 +39,13 @@ Rates are decimals (35% = `0.35`). Errors use dotted keys, e.g. `errors['offers.
 | Downsell | Only buyers who decline the upsell; requires an upsell | New charge |
 | One-time offer | Initial buyers × reach rate (100% in MVP) | New charge |
 
-AOV = gross funnel revenue ÷ initial buyers, from the modeled acceptance rates. The most one buyer could spend (main + bump + the larger of upsell or downsell + OTO) is shown separately.
+Three order-value figures are shown side by side, because the gap between them is the core teaching point of the Offer Map:
+
+| Figure | Meaning | Field |
+|---|---|---|
+| Main product price | What every buyer initially purchases | `results.mainPrice` |
+| Projected AOV | Average revenue per initial buyer after take rates (gross funnel revenue ÷ initial buyers) | `results.aov` |
+| Total available offer value | Combined price if one buyer accepts every offer they can see: main + bump + the higher of upsell or downsell + OTO | `results.totalOfferValue` |
 
 ## Decision log
 
@@ -106,7 +112,7 @@ Impossible numbers are flagged and that row is not applied. Editing a rate by ha
 
 On Vercel: Framework Preset **Other**, Build Command **empty**, Output Directory **empty**. If these files sit inside a subfolder of the repo, set Root Directory to that folder.
 
-A product name is required before the page calculates anything; until then sliders, results, goals, scenarios, saving and the report are locked. The engine itself does not require a name, so server-side use is unaffected.
+No product name is required: the page starts with "My First Digital Product", which customers can change, and calculates immediately.
 
 Named saves and the working state live in the visitor's own browser (`localStorage`, keyed by data schema). Account-based saving comes with GHL access control. The report uses the browser's print dialog (Save as PDF), with a dedicated print layout.
 

@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="0.5.0">
+<meta name="app-version" content="0.6.0">
 <title>Authority Funnel Revenue Calculator | Priddy Impact Group</title>
-<meta name="description" content="Plan the five evergreen digital products in your authority funnel and see how they work together on order value, revenue and profit.">
+<meta name="description" content="Map your digital product offers, explore how each purchase contributes to your average order value, and see the numbers behind your revenue goals.">
 <link rel="icon" href="assets/pig-monogram-gold.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -137,30 +137,6 @@
   details.more[open] { padding-bottom: 4px; }
   details.more .box { background: var(--white); }
 
-  /* ---------- Product name gate ---------- */
-  .req { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; color: var(--teal-deep); background: var(--gold); vertical-align: 1px; }
-  .name-hint { display: none; align-items: center; gap: 8px; margin: 8px 0 0; font-size: 0.84rem; font-weight: 500; color: var(--gold-dark); }
-  .name-hint .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold) 60%, transparent); animation: beacon 1.8s ease-out infinite; }
-  @keyframes beacon { to { box-shadow: 0 0 0 9px transparent; } }
-  .locked .name-hint { display: flex; }
-  .locked .name-box { border-color: var(--gold); background: color-mix(in oklab, var(--gold) 9%, var(--white)); box-shadow: 0 0 0 4px color-mix(in oklab, var(--gold) 18%, transparent); }
-  input[type=range]:disabled { cursor: not-allowed; opacity: .35; filter: grayscale(1); }
-  input[type=range]:disabled::-webkit-slider-thumb { cursor: not-allowed; }
-  .lockmsg { display: none; }
-  .locked .lockmsg { display: block; padding: 6px 0 4px; }
-  .locked .hero-grid, .locked .hero .warn { display: none; }
-  .lock-title { margin: 0; font-size: 1.35rem; font-weight: 600; color: var(--gold); }
-  .lock-body { margin: 4px 0 16px; font-weight: 300; color: color-mix(in oklab, var(--white) 82%, var(--teal)); max-width: 30rem; }
-  .gated { position: relative; transition: opacity .3s, filter .3s; }
-  .locked .gated { opacity: .45; filter: grayscale(.6); pointer-events: none; user-select: none; }
-  .locked .gated::after {
-    content: 'Add a product name to unlock'; position: absolute; top: 18px; right: 20px;
-    padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 500;
-    color: var(--teal-deep); background: var(--gold-tint); border: 1px solid var(--gold);
-  }
-  .locked .res-body.gated::after { display: none; }
-  @media (max-width: 520px) { .locked .gated::after { position: static; display: inline-block; margin: 0 0 12px; } }
-
   /* ---------- Offer flow ---------- */
   .flow { position: relative; padding-left: 26px; }
   .flow::before { /* the path a buyer travels */
@@ -189,7 +165,7 @@
   .offer-body { margin-top: 14px; }
   .yield { margin: -4px 0 12px; padding: 8px 12px; border-radius: 8px; background: var(--gold-tint); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
   .yield b { font-weight: 600; }
-  .locked { margin: 8px 0 0; font-size: 0.82rem; color: var(--slate); }
+  .ds-lock { margin: 8px 0 0; font-size: 0.82rem; color: var(--slate); }
 
   /* Toggle switch */
   .switch { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; flex: none; font-size: 0.82rem; font-weight: 500; color: var(--slate); }
@@ -270,6 +246,48 @@
   input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 5px color-mix(in oklab, var(--gold) 45%, transparent), 0 2px 8px rgb(0 43 56 / 25%); }
   input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 5px color-mix(in oklab, var(--gold) 45%, transparent); }
   input[type=range]:focus:not(:focus-visible) { outline: none; }
+
+  /* Offer explanations */
+  .explain { margin: 4px 0 0; font-size: 0.84rem; line-height: 1.5; color: var(--teal); max-width: 34rem; }
+  .ex { display: block; color: var(--slate); font-size: 0.8rem; font-style: italic; }
+  .hint .ex { display: inline; }
+
+  /* Funnel sequence */
+  .journey { margin: 0 0 18px; padding: 14px; border-radius: var(--radius-md); background: var(--teal-tint); container-type: inline-size; }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: center; }
+  .steps > li { position: relative; }
+  .steps > li:not(:last-child)::after { /* connector arrow */
+    content: ''; position: absolute; top: 50%; right: -14px; width: 12px; height: 12px; transform: translateY(-50%);
+    background: no-repeat center / 12px 12px linear-gradient(var(--gold), var(--gold)) center / 12px 2px;
+    clip-path: polygon(0 42%, 60% 42%, 60% 15%, 100% 50%, 60% 85%, 60% 58%, 0 58%);
+    background: var(--gold-dark);
+  }
+  .step { display: block; background: var(--white); border: 1.5px solid var(--gold); border-radius: 10px; padding: 7px 9px; line-height: 1.25; transition: opacity .25s, border-color .25s; }
+  .step b { display: block; font-size: 0.78rem; font-weight: 600; }
+  .step small { display: block; font-size: 0.68rem; color: var(--slate); }
+  .step em { display: block; font-style: normal; font-size: 0.7rem; color: var(--gold-dark); font-weight: 500; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .step.off { opacity: .45; border-style: dashed; border-color: var(--slate-line); }
+  .branch { display: flex; flex-direction: column; gap: 3px; }
+  .no { font-size: 0.66rem; color: var(--slate); padding: 1px 0 1px 10px; margin-left: 12px; border-left: 2px dashed var(--gold); }
+  .journey figcaption { margin-top: 10px; font-size: 0.76rem; color: var(--slate); line-height: 1.45; }
+  @container (max-width: 470px) {
+    .steps { grid-template-columns: 1fr; gap: 14px; }
+    .steps > li:not(:last-child)::after { top: auto; bottom: -13px; right: auto; left: 18px; transform: rotate(90deg); }
+  }
+
+  /* Order value comparison */
+  .ladder { margin: 0 0 20px; padding: 0 0 18px; border-bottom: 1px solid var(--slate-line); }
+  .ladder-figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  @container (max-width: 440px) { .ladder-figs { grid-template-columns: 1fr; } }
+  .ladder-figs > div { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--teal-tint); }
+  .ladder-figs > div.lv-aov { background: var(--gold-tint); box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .ladder-figs span { display: block; font-size: 0.76rem; font-weight: 500; color: var(--slate); }
+  .ladder-figs b { display: block; font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ladder-figs small { display: block; font-size: 0.7rem; line-height: 1.35; color: var(--slate); margin-top: 2px; }
+  .ladder-bar { position: relative; height: 12px; margin: 14px 0 0; border-radius: 999px; background: color-mix(in oklab, var(--teal) 10%, var(--white)); }
+  .lb-fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: linear-gradient(90deg, var(--gold-dark), var(--gold)); transition: width .6s cubic-bezier(.2, .8, .2, 1); }
+  .lb-main { position: absolute; top: -4px; width: 2px; height: 20px; background: var(--teal); transition: left .6s cubic-bezier(.2, .8, .2, 1); }
+  .ladder-note { margin: 10px 0 0; font-size: 0.82rem; color: var(--teal); line-height: 1.5; }
 
   /* ---------- Results hero ---------- */
   .hero {
@@ -442,9 +460,6 @@
   .dock span { display: block; font-weight: 300; font-size: 0.75rem; }
   .dock b { font-weight: 700; font-size: 1.2rem; color: var(--gold); font-variant-numeric: tabular-nums; }
   .dock b.loss { color: var(--loss-soft); }
-  .dock-lock { display: none; grid-column: 1 / -1; color: var(--gold); font-weight: 500; font-size: 0.9rem; }
-  .locked .dock-lock { display: block; }
-  .locked .dock > div:not(.dock-lock) { display: none; }
   @media (min-width: 1000px) { .dock { display: none; } .page { padding-bottom: 24px; } }
 
   /* ---------- GoHighLevel embed (?embed=1) ---------- */
@@ -489,7 +504,7 @@
     <div class="rule" aria-hidden="true"></div>
     <div>
       <h1><span class="k">Authority</span> Funnel Revenue Calculator</h1>
-      <p>Plan the five evergreen digital products that build your authority and lead clients to your bigger work. Change any number and see how your order value and profit respond.</p>
+      <p>Map your digital product offers, explore how each purchase contributes to your average order value, and see the numbers behind your revenue goals.</p>
     </div>
   </div>
 </header>
@@ -500,11 +515,10 @@
     <div class="stack">
       <section class="card pad" aria-labelledby="s1">
         <div class="sec-head"><span class="sec-num">1</span><h2 id="s1">Main product</h2></div>
-        <p class="hint">The first thing people buy. Every figure starts as an example, so replace it with your own.</p>
+        <p class="hint">The first product people buy from your sales page. Every buyer starts here. <span class="ex">Example: a $27 workbook.</span> Every figure starts as an example, so replace it with your own.</p>
         <div class="field">
-          <label for="f-productName">Product name <span class="req">Required</span></label>
-          <div class="box name-box"><input id="f-productName" data-field="productName" type="text" placeholder="e.g. Meal Prep Workbook" autocomplete="off" required aria-required="true" aria-describedby="nameHint"></div>
-          <p class="name-hint" id="nameHint"><span class="dot" aria-hidden="true"></span>Name your product to unlock the sliders and see your results.</p>
+          <label for="f-productName">Product name <span class="sub">(change it anytime)</span></label>
+          <div class="box"><input id="f-productName" data-field="productName" type="text" placeholder="My First Digital Product" autocomplete="off"></div>
         </div>
         <div class="field">
           <label for="f-price">Selling price</label>
@@ -537,6 +551,19 @@
       <section class="card pad" aria-labelledby="s2">
         <div class="sec-head"><span class="sec-num">2</span><h2 id="s2">Additional offers</h2></div>
         <p class="hint">Turn on the offers in your funnel. Each one is shown only to the buyers who reach it.</p>
+        <figure class="journey" aria-labelledby="journeyCap">
+          <ol class="steps">
+            <li class="step" data-step="main"><b>Main product</b><small>Sales page</small><em id="jc-main"></em></li>
+            <li class="step" data-step="bump"><b>Order bump</b><small>At checkout</small><em id="jc-bump"></em></li>
+            <li class="branch">
+              <div class="step" data-step="upsell"><b>Upsell</b><small>After purchase</small><em id="jc-upsell"></em></div>
+              <div class="no">If they say no</div>
+              <div class="step" data-step="downsell"><b>Downsell</b><small>Instead of the upsell</small><em id="jc-downsell"></em></div>
+            </li>
+            <li class="step" data-step="oto"><b>One-time offer</b><small>Final step</small><em id="jc-oto"></em></li>
+          </ol>
+          <figcaption id="journeyCap">When each offer appears. Buyers move left to right, and each offer is seen only by the people who reach it. A buyer takes the upsell or the downsell, never both.</figcaption>
+        </figure>
         <div class="rates-panel">
           <p class="rates-intro"><b>Not sure what percentage to enter?</b> Start with our conservative planning scenario. Once you have actual sales data, replace these assumptions with your own results.</p>
           <div class="seg" role="group" aria-label="Take rates for every offer">
@@ -598,11 +625,6 @@
     <section class="card results" aria-labelledby="s4">
       <div class="hero">
         <div class="sec-head hero-head"><span class="sec-num">4</span><h2 id="s4">Your results</h2></div>
-        <div class="lockmsg" id="lockMsg">
-          <p class="lock-title">Start by naming your product</p>
-          <p class="lock-body">Your order value, profit and goals appear here as soon as you do, and update live as you change any number.</p>
-          <button type="button" class="btn gold" id="goName">Add product name</button>
-        </div>
         <div class="hero-grid">
           <div>
             <div class="label">Average order value</div>
@@ -617,7 +639,17 @@
         </div>
         <p class="warn" id="o-lossWarn" hidden>At these numbers the funnel loses money each month. Try higher prices, lower ad spend, or getting more buyers to say yes.</p>
       </div>
-      <div class="res-body gated" id="o-body">
+      <div class="res-body" id="o-body">
+        <div class="ladder" aria-labelledby="ladderH">
+          <h3 class="sub-h" id="ladderH" style="margin-top:0">Order value: the ceiling versus the average</h3>
+          <div class="ladder-figs">
+            <div><span>Main product price</span><b id="lv-main"></b><small>What every buyer initially purchases</small></div>
+            <div class="lv-aov"><span>Projected AOV</span><b id="lv-aov"></b><small>Average revenue per initial buyer after take rates</small></div>
+            <div><span>Total available offer value</span><b id="lv-total"></b><small id="lv-total-sub">If one buyer says yes to every offer</small></div>
+          </div>
+          <div class="ladder-bar" aria-hidden="true"><div class="lb-fill" id="lb-fill"></div><i class="lb-main" id="lb-main"></i></div>
+          <p class="ladder-note" id="lv-note"></p>
+        </div>
         <dl class="kpis">
           <div class="kpi"><dt>Initial buyers</dt><dd id="o-buyers"></dd><div class="why">Main product sales</div></div>
           <div class="kpi"><dt>Funnel revenue</dt><dd id="o-gross"></dd><div class="why">Before refunds</div></div>
@@ -628,7 +660,6 @@
         <h3 class="sub-h">Revenue by offer <small id="o-share"></small></h3>
         <div class="stackbar" id="o-stack" role="img" aria-label="Share of funnel revenue by offer"></div>
         <table class="offer-rows" id="o-offers"></table>
-        <p class="ceiling" id="o-ceiling"></p>
 
         <details class="ledger-d">
           <summary>Where the money goes</summary>
@@ -652,7 +683,7 @@
   </div>
 
   <!-- Section 5: goal planner -->
-  <section class="card pad wide gated" aria-labelledby="s5">
+  <section class="card pad wide" aria-labelledby="s5">
     <div class="sec-head"><span class="sec-num">5</span><h2 id="s5">Revenue goal planner</h2></div>
     <p class="hint">Set your targets and see what it takes: more visitors, more of them buying, or a higher order value.</p>
     <div class="goal-inputs">
@@ -713,7 +744,7 @@
   </section>
 
   <!-- Section 6: scenarios -->
-  <section class="card pad wide gated" aria-labelledby="s6">
+  <section class="card pad wide" aria-labelledby="s6">
     <div class="sec-head"><span class="sec-num">6</span><h2 id="s6">Scenario comparison</h2></div>
     <p class="hint">Each version starts from the Conservative, Expected and Stretch take rates and your own traffic. Edit any rate; prices and costs carry over from above. These rates are illustrative planning assumptions, not verified industry benchmarks or predictions.</p>
     <div class="scen-wrap"><table class="scen" id="scen"></table></div>
@@ -751,7 +782,6 @@
 </footer>
 
 <div class="dock" aria-hidden="true">
-  <div class="dock-lock">Name your product to see results</div>
   <div><span>Order value</span><b id="d-aov">—</b></div>
   <div><span>Monthly profit</span><b id="d-profit">—</b></div>
 </div>
@@ -762,9 +792,9 @@
 import {
   calculate, compareScenarios, defaultScenarios, takeRatesFromData, DATA_ROWS, DEFAULT_INPUTS, DEFINITIONS, OFFER_KEYS, OFFER_LABELS,
   formatMoney, formatCount,
-} from './src/calc.js?v=0.5.0';
-import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.5.0';
-import { PLANNING_RANGES, RANGE_KEYS, RANGE_LABELS, ASSUMPTION_LABEL, describeRate, matchingScenario } from './src/guidance.js?v=0.5.0';
+} from './src/calc.js?v=0.6.0';
+import { APP_VERSION, ENGINE_VERSION, DATA_SCHEMA } from './src/version.js?v=0.6.0';
+import { PLANNING_RANGES, RANGE_KEYS, RANGE_LABELS, ASSUMPTION_LABEL, describeRate, matchingScenario } from './src/guidance.js?v=0.6.0';
 
 const $ = (id) => document.getElementById(id);
 const CURRENT_KEY = 'pig-dp002-current';
@@ -773,10 +803,30 @@ const SCEN = { conservative: 'Conservative', expected: 'Expected', stretch: 'Str
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const OFFER_UI = {
-  bump: { stage: 'At checkout', who: (r) => `Shown to all ${formatCount(r)} buyers, added to the same order` },
-  upsell: { stage: 'Right after purchase', who: (r) => `Shown to all ${formatCount(r)} buyers` },
-  downsell: { stage: 'Only if they say no to the upsell', who: (r) => `Shown to the ${formatCount(r)} buyers who declined the upsell` },
-  oto: { stage: 'Final offer', who: (r) => `Shown to all ${formatCount(r)} buyers who reach this step` },
+  bump: {
+    stage: 'At checkout',
+    what: 'A small complementary purchase added during checkout.',
+    example: 'A $17 template pack buyers can add to the workbook with one click before paying.',
+    who: (r) => `Shown to all ${formatCount(r)} buyers, added to the same order`,
+  },
+  upsell: {
+    stage: 'Right after purchase',
+    what: 'Another offer presented after the initial purchase.',
+    example: 'On the next page, an invitation to a $97 mini-course that goes deeper than the workbook.',
+    who: (r) => `Shown to all ${formatCount(r)} buyers`,
+  },
+  downsell: {
+    stage: 'Only if they say no to the upsell',
+    what: 'An alternative offered when someone declines the upsell.',
+    example: 'Passed on the $97 course? Offer a $47 self-paced version instead.',
+    who: (r) => `Shown to the ${formatCount(r)} buyers who declined the upsell`,
+  },
+  oto: {
+    stage: 'Final offer',
+    what: 'An additional offer available at a specific point in the purchase journey.',
+    example: 'On the last step before the thank-you page, a $297 group workshop offered only there.',
+    who: (r) => `Shown to all ${formatCount(r)} buyers who reach this step`,
+  },
 };
 
 const pctToUI = (v) => +(v * 100).toFixed(4);
@@ -798,11 +848,12 @@ function buildOffers() {
         <div>
           <div class="stage">${OFFER_UI[k].stage}</div>
           <h3>${OFFER_LABELS[k]}</h3>
-          <p class="who" id="who-${k}"></p>
         </div>
         <label class="switch"><input type="checkbox" role="switch" data-field="offers.${k}.enabled" id="t-${k}" aria-label="Include ${OFFER_LABELS[k]}"><span class="track"></span><span class="sw-txt">Include</span></label>
       </div>
-      ${k === 'downsell' ? '<p class="locked" id="downsellLock" hidden>Turn on the upsell first. A downsell is only offered to buyers who decline an upsell.</p>' : ''}
+      <p class="explain">${OFFER_UI[k].what} <span class="ex">Example: ${OFFER_UI[k].example}</span></p>
+      <p class="who" id="who-${k}"></p>
+      ${k === 'downsell' ? '<p class="ds-lock" id="downsellLock" hidden>Turn on the upsell first. A downsell is only offered to buyers who decline an upsell.</p>' : ''}
       <div class="offer-body">
         <div class="field">
           <label for="f-${k}-name">Product name</label>
@@ -944,7 +995,24 @@ function renderResults(r) {
     `<thead><tr><td></td><td>Buyers</td><td>Revenue</td></tr></thead>` +
     r.offers.map((o) => `<tr class="${o.active ? '' : 'off'}"><td><span class="swatch" style="background:var(--c-${o.key})"></span>${esc(o.name || o.label)}${o.name ? ` <span style="color:var(--slate);font-size:.8em">${esc(o.label)}</span>` : ''}</td><td>${o.active ? formatCount(o.buyers) : 'Off'}</td><td>${o.active ? money(o.revenue) : '—'}</td></tr>`).join('') +
     `<tr class="tot"><td>Funnel total</td><td></td><td>${money(total)}</td></tr>`;
-  $('o-ceiling').innerHTML = `Most one buyer could spend in this funnel: <b>${money(x.maxCheckoutValue)}</b>. Your AOV is the realistic average, because not every buyer says yes to everything.`;
+  // Order value: main price → projected AOV → total available offer value
+  const o = r.inputs.offers;
+  const parts = [money0(x.mainPrice)];
+  if (o.bump.active) parts.push(money0(o.bump.price));
+  if (o.upsell.active && o.downsell.active) parts.push(`${money0(Math.max(o.upsell.price, o.downsell.price))} (${o.upsell.price >= o.downsell.price ? 'upsell' : 'downsell'})`);
+  else if (o.upsell.active) parts.push(money0(o.upsell.price));
+  if (o.oto.active) parts.push(money0(o.oto.price));
+  $('lv-main').textContent = money(x.mainPrice);
+  $('lv-aov').textContent = money(x.aov);
+  $('lv-total').textContent = money(x.totalOfferValue);
+  $('lv-total-sub').textContent = parts.length > 1 ? `${parts.join(' + ')}. Upsell or downsell, never both.` : 'Add offers to raise the ceiling';
+  const top = x.totalOfferValue || 1;
+  $('lb-fill').style.width = `${Math.min(100, (x.aov / top) * 100)}%`;
+  $('lb-main').style.left = `${Math.min(100, (x.mainPrice / top) * 100)}%`;
+  const capture = x.totalOfferValue > 0 ? Math.round((x.aov / x.totalOfferValue) * 100) : 0;
+  $('lv-note').textContent = parts.length > 1
+    ? `Most buyers won't take every offer. At these take rates, the average buyer spends ${money(x.aov)}, about ${capture}% of the ${money(x.totalOfferValue)} available. Raise take rates or prices to move the average toward the ceiling.`
+    : 'With only the main product, every buyer spends the same amount. Turn on offers to see how they raise the average.';
 
   // Ledger
   $('l-gross').textContent = money(x.grossRevenue);
@@ -969,6 +1037,10 @@ function renderResults(r) {
     gs.textContent = d ? d.message : '';
     gs.dataset.band = d ? d.band : '';
     for (const c of document.querySelectorAll(`.rchip[data-offer="${o.key}"]`)) c.setAttribute('aria-pressed', String(Math.abs(Number(c.dataset.v) - o.rate) < 1e-9));
+  }
+  for (const o of r.offers) {
+    document.querySelector(`.step[data-step="${o.key}"]`).classList.toggle('off', !o.active);
+    $(`jc-${o.key}`).textContent = !o.active ? 'Off' : o.key === 'main' ? `${formatCount(o.buyers)} buyers` : `${formatCount(o.eligible)} see it, ${formatCount(o.buyers)} buy`;
   }
 
   const dA = $('d-aov'); dA.textContent = money(x.aov);
@@ -1065,21 +1137,6 @@ function render() {
   $('t-downsell').disabled = !upOn;
   $('downsellLock').hidden = upOn;
 
-  // A product name is required before anything is calculated.
-  const named = $('f-productName').value.trim() !== '';
-  document.documentElement.classList.toggle('locked', !named);
-  for (const sl of document.querySelectorAll('input[type=range]')) sl.disabled = !named;
-  for (const id of ['saveBtn', 'reportBtn', 'resetScen']) $(id).disabled = !named;
-  for (const c of document.querySelectorAll('.rchip, .seg-btn')) c.disabled = !named;
-  for (const el of document.querySelectorAll('.gated input, .gated button')) el.tabIndex = named ? 0 : -1;
-  if (!named) {
-    for (const id of ['d-aov', 'd-profit']) $(id).textContent = '—';
-    delete shown['o-aov']; delete shown['o-profit'];
-    last = null;
-    try { localStorage.setItem(CURRENT_KEY, JSON.stringify({ schema: DATA_SCHEMA, values: snapshot(), scenarios })); } catch { /* storage unavailable */ }
-    return;
-  }
-
   if (mode() === 'data') applySalesData();
   const raw = readInputs();
   const r = calculate(raw);
@@ -1164,7 +1221,7 @@ $('savedList').addEventListener('click', (e) => {
 function buildReport() {
   if (!last) return false;
   const { r, s } = last, x = r.results, i = r.inputs;
-  const title = $('saveName').value.trim() || i.productName || 'My funnel';
+  const title = $('saveName').value.trim() || i.productName || 'My First Digital Product';
   const g = r.goals;
   const goalRow = (label, goal) => !goal ? '' : `<tr><td>${label}</td><td>${money0(goal.goal)}</td><td>${goal.reachable ? whole(goal.requiredBuyers) : 'Not reachable'}</td><td>${goal.reachable ? whole(goal.requiredVisitors) : '—'}</td></tr>`;
   $('report').innerHTML = `
@@ -1183,7 +1240,7 @@ function buildReport() {
       ${r.offers.map((o) => `<tr><td>${esc(o.label)}${o.name ? `: ${esc(o.name)}` : ''}</td><td>${o.active ? money(o.price) : '—'}</td><td>${o.active ? pct(o.rate) : 'Off'}</td><td>${o.active ? formatCount(o.eligible) + (o.key === 'main' ? ' visitors' : '') : '—'}</td><td>${o.active ? formatCount(o.buyers) : '—'}</td><td>${o.active ? money(o.revenue) : '—'}</td></tr>`).join('')}
       <tr><td><b>Total</b></td><td></td><td></td><td></td><td></td><td><b>${money(x.grossRevenue)}</b></td></tr>
     </tbody></table>
-    <p style="font-size:9pt;color:var(--slate)">Most one buyer could spend: ${money(x.maxCheckoutValue)}.<br>
+    <p style="font-size:9pt;color:var(--slate)">Main product price ${money(x.mainPrice)}; projected AOV ${money(x.aov)}; total available offer value ${money(x.totalOfferValue)} (counts the upsell or the downsell, not both).<br>
       Take rates: ${esc($('segStatus').textContent)} ${$('assumeLabel').hidden ? '' : esc(ASSUMPTION_LABEL)}</p>
     <h2>Monthly profit</h2>
     <table><tbody>
@@ -1322,7 +1379,6 @@ document.querySelector('.seg').addEventListener('click', (e) => {
   for (const k of OFFER_KEYS) setOfferRate(k, PLANNING_RANGES[k][b.dataset.mode]);
   render();
 });
-$('goName').addEventListener('click', () => { const f = $('f-productName'); f.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' }); f.focus({ preventScroll: true }); });
 $('yearlyGoal').addEventListener('input', (e) => {
   const n = Number(e.target.value.replace(/[$,\s]/g, ''));
   if (e.target.value.trim() === '' || !Number.isFinite(n) || n < 0) return;

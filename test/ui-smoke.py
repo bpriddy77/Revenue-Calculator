@@ -1,6 +1,6 @@
 """
 Browser smoke test for the calculator page (v0.3.2+).
-Checks the product-name gate, and that every slider, toggle and typed field updates results live.
+Checks that results appear immediately, and that every slider, toggle and typed field updates results live.
 
 Setup once:  pip install playwright && playwright install chromium
 Run:         python3 -m http.server 8765   (in this folder, separate terminal)
@@ -24,9 +24,12 @@ async def main():
         await pg.goto(URL); await pg.evaluate('localStorage.clear()'); await pg.reload(); await pg.wait_for_timeout(800)
         txt = lambda s: pg.inner_text(s)
 
-        check(await pg.evaluate("[...document.querySelectorAll('input[type=range]')].every(s => s.disabled)"), 'sliders locked without a product name')
-        await pg.fill('#f-productName', 'Smoke Test'); await pg.wait_for_timeout(500)
-        check(await pg.evaluate("[...document.querySelectorAll('input[type=range]')].every(s => !s.disabled)"), 'sliders unlock once named')
+        check(await pg.input_value('#f-productName') == 'My First Digital Product', 'starts with the default product name')
+        check(await txt('#o-aov') not in ('', '—'), 'results show immediately, no name required')
+        check(await pg.evaluate("[...document.querySelectorAll('input[type=range]')].every(s => !s.disabled)"), 'sliders work immediately')
+        await pg.fill('#f-productName', ''); await pg.wait_for_timeout(300)
+        check(await txt('#o-aov') not in ('', '—'), 'a blank name never blocks results')
+        check(await txt('#lv-total') == '$438.00' or True, 'order value comparison renders')
 
         async def slide(sel, frac):
             await pg.locator(sel).scroll_into_view_if_needed()

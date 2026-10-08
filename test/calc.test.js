@@ -56,6 +56,25 @@ test('costs and profit for the example', () => {
   close(x.maxCheckoutValue, 27 + 17 + 97 + 297, 'upsell OR downsell, never both');
 });
 
+test('three order-value figures: main price ≤ projected AOV ≤ total available offer value', () => {
+  const x = calculate(base).results;
+  assert.equal(x.mainPrice, 27);
+  close(x.totalOfferValue, 438, '27 + 17 + max(97, 47) + 297');
+  close(x.aov, 93.95);
+  assert.ok(x.mainPrice <= x.aov && x.aov <= x.totalOfferValue);
+});
+
+test('total available offer value uses the downsell when it is the higher branch', () => {
+  const x = calculate(withOffers({ upsell: { price: 30 }, downsell: { price: 60 } })).results;
+  close(x.totalOfferValue, 27 + 17 + 60 + 297);
+});
+
+test('the calculator works with the default product name', () => {
+  assert.equal(DEFAULT_INPUTS.productName, 'My First Digital Product');
+  assert.equal(calculate(DEFAULT_INPUTS).ok, true);
+  assert.equal(calculate({ ...DEFAULT_INPUTS, productName: '' }).ok, true, 'a blank name never blocks results');
+});
+
 test('totals equal buyers × per-buyer values', () => {
   const x = calculate(base).results;
   close(x.buyers * x.retainedRevenuePerBuyer, x.netRevenue);
